@@ -44,7 +44,7 @@ func DungeonDraw(rows int, cols int, field [][]byte, obj [][]byte) int {
 			if y == rows {
 				goncurses.StdScr().MoveAddChar(y, x, goncurses.Char(' '))
 			} else if field[y][x] == ' ' {
-				if obj[y][x] == '>' && (lvl_turns > 9+dlvl ||
+				if obj[y][x] == '>' && (lvl_turns > 420+dlvl ||
 					((y > py-5 && x > px-5) && (y < py+5 && x < px+5))) {
 					goncurses.StdScr().AttrOn(goncurses.A_BOLD)
 					goncurses.StdScr().MoveAddChar(y, x, '>')
@@ -433,7 +433,7 @@ func SpawnT(rows int, cols int, field [][]byte) int {
 			my = rand.Int() % rows
 			mx = rand.Int() % cols
 			for {
-				if field[my][mx] != ' ' || (my == py && mx == px) {
+				if field[my][mx] == ' ' || (my == py && mx == px) {
 					break
 				}
 				my = rand.Int() % rows
@@ -471,6 +471,19 @@ func SpawnT(rows int, cols int, field [][]byte) int {
 
 func SpawnP(rows int, cols int, field [][]byte, obj [][]byte) int {
 	if !p_placed {
+		sy = rand.Int() % rows
+		sx = rand.Int() % cols
+		for {
+			if field[sy][sx] == ' ' {
+				break
+			}
+			// if field[sy][sx] != '%' && field[sy][sx] != '#' {
+			// 	break
+			// }
+			sy = rand.Int() % rows
+			sx = rand.Int() % cols
+		}
+		obj[sy][sx] = '>'
 		var dist_y, dist_x int
 		py = rand.Int() % rows
 		px = rand.Int() % cols
@@ -508,6 +521,9 @@ func SpawnObj(rows int, cols int, field [][]byte, obj [][]byte) int {
 				if field[sy][sx] != ' ' {
 					break
 				}
+				// if field[sy][sx] != '%' && field[sy][sx] != '#' {
+				// 	break
+				// }
 				sy = rand.Int() % rows
 				sx = rand.Int() % cols
 			}
@@ -538,12 +554,12 @@ func SpawnObj(rows int, cols int, field [][]byte, obj [][]byte) int {
 		}
 	}
 	// each turn there is a chance to spawn trap (the faster you run away - the better)
-	if rand.Int()%((18-dlvl)/2) != 0 {
+	if rand.Int()%((18-dlvl)/2) == 0 {
 		var y, x int
 		y = rand.Int() % rows
 		x = rand.Int() % cols
 		for {
-			if field[y][x] != ' ' && obj[y][x] != ' ' {
+			if field[y][x] == ' ' && obj[y][x] == ' ' {
 				break
 			}
 			y = rand.Int() % rows
@@ -590,8 +606,8 @@ func DungeonGen(rows int, cols int, field [][]byte) int {
 				r_size_x = rand.Int()%10 + 8
 				try_counter++
 				//check for collision
-				for y := ry; y <= ry+r_size_y; y++ {
-					for x := rx; x < rx+r_size_x; x++ {
+				for y := ry; y <= ry+r_size_y && y < rows; y++ {
+					for x := rx; x < rx+r_size_x && x < cols; x++ {
 						if field[y][x] == '%' || field[y][x] == ' ' || field[y+1][x] == ' ' || field[y-1][x] == ' ' || field[y][x+1] == ' ' || field[y][x-1] == ' ' {
 							collision = true
 							y = ry + r_size_y + 1 //exit upper loop
@@ -599,14 +615,14 @@ func DungeonGen(rows int, cols int, field [][]byte) int {
 						}
 					}
 				}
-				if collision {
+				if !collision {
 					break
 				}
 
 			}
 			// fill DB map with rooms
-			for y := ry; y <= ry+r_size_y; y++ {
-				for x := rx; x <= rx+r_size_x; x++ {
+			for y := ry; y <= ry+r_size_y && y < rows; y++ {
+				for x := rx; x <= rx+r_size_x && x < cols; x++ {
 					if field[y][x] == '%' {
 						y = ry + r_size_y + 1
 						break
@@ -624,9 +640,15 @@ func DungeonGen(rows int, cols int, field [][]byte) int {
 			r_center_y = ry + (r_size_y / 2)
 			r_center_x = rx + (r_size_x / 2)
 
+			if r_center_y >= rows {
+				r_center_y = rows - 3
+			}
+			if r_center_x >= cols {
+				r_center_x = cols - 3
+			}
 			if r_placed > 1 {
 				var path_y, path_x int
-				for path_y = r_old_center_y; path_y != r_center_y; {
+				for path_y = r_old_center_y; path_y != r_center_y && path_y < rows; {
 					if field[path_y][r_old_center_x] != '%' {
 						field[path_y][r_old_center_x] = ' '
 					}
@@ -637,7 +659,7 @@ func DungeonGen(rows int, cols int, field [][]byte) int {
 					}
 				}
 
-				for path_x = r_old_center_x; path_x != r_center_x; {
+				for path_x = r_old_center_x; path_x != r_center_x && path_x < cols; {
 					if field[path_y][path_x] != '%' {
 						field[path_y][path_x] = ' '
 					}
@@ -730,7 +752,8 @@ func GameLoop(c int, rows int, cols int, field [][]byte, obj [][]byte) int {
 		}
 		if hp > 0 {
 			killer = CheckTrap(rows, cols, obj)
-		} else {
+		}
+		if hp < 1 {
 			c = Rip(rows, cols, killer)
 			turns = 0
 			return c
@@ -890,10 +913,10 @@ func main() {
 	goncurses.Cursor(0)
 
 	// adaptive way of the screen size:
-	//getmaxyx(stdscr,rows,cols);
+	rows, cols = goncurses.StdScr().MaxYX()
 	// but this particular game designed to be played at tiny term:
-	rows = 23
-	cols = 80
+	// rows = 23
+	// cols = 80
 
 	// var field[rows][cols] slice
 	field := make([][]byte, rows)
