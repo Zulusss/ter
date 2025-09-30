@@ -63,6 +63,9 @@ type stats_t struct {
 	agility    int
 	hp         int
 	isChasing  bool
+	isFirst    bool
 	aggression int
 	lastMove   int
+	hpStealed  int
+	extraSym   int
 }

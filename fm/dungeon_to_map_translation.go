@@ -13,8 +13,8 @@ func init_map(field *map_t) {
 		}
 	}
 
-	// field.enemies_cnt = 0;
-	// map->items_cnt = 0;
+	field.enemies_cnt = 0
+	field.items_cnt = 0
 }
 
 func rooms_to_map(dungeon *dungeon_t, field *map_t) {

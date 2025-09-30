@@ -33,8 +33,10 @@ func main() {
 	// goncurses.StdScr().GetChar()
 	for key != ESC {
 		// goncurses.StdScr().MovePrint(0, 0, "DUNGEON GENERATED...")
-		player_movement(&field, &player, key)
-		checkTile(&dungeon, &field, &player)
+
+		player_movement(&dungeon, &field, &player, key)
+		// checkTile(&dungeon, &field, &player)
+
 		checkPotion(&player)
 		enemyTurn(&dungeon, &field, &player)
 		render_screen(&field, &player, &screen)

@@ -18,7 +18,7 @@ func initInventory(player *player_t) {
 	player.inventory.food = make([]int, 0, 9)
 	player.inventory.potion = make([]int, 0, 9)
 	player.strength = rand.Int()%3 + 1
-	player.agility = rand.Int()%4 + 1
+	player.agility = rand.Int()%4 + 2
 	player.health = rand.Int()%10 + 3
 	player.maxHealth = player.health
 }
@@ -252,52 +252,245 @@ func useWeapon(player *player_t, field *map_t) {
 	}
 }
 
-func player_movement(field *map_t, player *player_t, key int) {
-	if key == 'w' || key == goncurses.KEY_UP {
-		player.pos.y -= MOVEMENT_STEP
+func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int) {
+	if !player.isSleeped {
+		var redraw bool
+		if key == 'w' || key == goncurses.KEY_UP {
+			player.pos.y -= MOVEMENT_STEP
+			checkTile(dungeon, field, player)
 
-		if field.playground[player.pos.y][player.pos.x] == WALL_CHAR ||
-			field.playground[player.pos.y][player.pos.x] == OUTER_AREA_CHAR {
+			if field.playground[player.pos.y][player.pos.x] == 'z' ||
+				field.playground[player.pos.y][player.pos.x] == 'v' ||
+				field.playground[player.pos.y][player.pos.x] == 'm' ||
+				field.playground[player.pos.y][player.pos.x] == 'O' ||
+				field.playground[player.pos.y][player.pos.x] == 'g' ||
+				field.playground[player.pos.y][player.pos.x] == 's' {
+				var pos position_t
+				pos.y, pos.x = player.pos.y, player.pos.x
+				player.pos.y += MOVEMENT_STEP
+				redraw = true
+				enemy := findEnemy(dungeon, &pos)
+				if enemy != nil {
+					playerAttack(enemy, player)
+					if enemy.stats.hp < 1 {
+						field.playground[enemy.pos.y][enemy.pos.x] = ' '
+						// var deadEnemy entity_t
+						// enemy = &deadEnemy
+						player.gold += rand.Int()%10 + 1
+						enemy.typeE = 5
+						player.maxHealth += enemy.stats.hpStealed
+						// enemy.pos.x = 0
+						// enemy.pos.y = 0
+						// enemy = nil
+					}
+				}
+			} else if field.playground[player.pos.y][player.pos.x] == WALL_CHAR ||
+				field.playground[player.pos.y][player.pos.x] == OUTER_AREA_CHAR {
+				// player->pos.x -= sinf(player->view_angle) * MOVEMENT_STEP;
+				redraw = true
+				player.pos.y += MOVEMENT_STEP
+			}
+			if !redraw {
+				// ch := field.playground[player.pos.y+MOVEMENT_STEP][player.pos.x]
+				// if ch == '$' || ch == '*' || ch == '?' || ch == '/' || ch == '^' {
+				// 	field.playground[player.pos.y][player.pos.x] = '@'
+				// } else {
+				field.playground[player.pos.y+MOVEMENT_STEP][player.pos.x] = ' '
+				field.playground[player.pos.y][player.pos.x] = '@'
+				// }
+			}
+		} else if key == 's' || key == goncurses.KEY_DOWN {
 			// player->pos.x -= sinf(player->view_angle) * MOVEMENT_STEP;
 			player.pos.y += MOVEMENT_STEP
-		}
-	} else if key == 's' || key == goncurses.KEY_DOWN {
-		// player->pos.x -= sinf(player->view_angle) * MOVEMENT_STEP;
-		player.pos.y += MOVEMENT_STEP
+			checkTile(dungeon, field, player)
 
-		if field.playground[player.pos.y][player.pos.x] == WALL_CHAR ||
-			field.playground[player.pos.y][player.pos.x] == OUTER_AREA_CHAR {
-			// player->pos.x += sinf(player->view_angle) * MOVEMENT_STEP;
-			player.pos.y -= MOVEMENT_STEP
-		}
-	} else if key == 'a' || key == goncurses.KEY_LEFT {
-		player.pos.x -= MOVEMENT_STEP
-		if field.playground[player.pos.y][player.pos.x] == WALL_CHAR ||
-			field.playground[player.pos.y][player.pos.x] == OUTER_AREA_CHAR {
-			player.pos.x += MOVEMENT_STEP
-		}
-	} else if key == 'd' || key == goncurses.KEY_RIGHT {
-		player.pos.x += MOVEMENT_STEP
-		if field.playground[player.pos.y][player.pos.x] == WALL_CHAR ||
-			field.playground[player.pos.y][player.pos.x] == OUTER_AREA_CHAR {
+			if field.playground[player.pos.y][player.pos.x] == 'z' ||
+				field.playground[player.pos.y][player.pos.x] == 'v' ||
+				field.playground[player.pos.y][player.pos.x] == 'm' ||
+				field.playground[player.pos.y][player.pos.x] == 'O' ||
+				field.playground[player.pos.y][player.pos.x] == 'g' ||
+				field.playground[player.pos.y][player.pos.x] == 's' {
+				var pos position_t
+				pos.y, pos.x = player.pos.y, player.pos.x
+				player.pos.y -= MOVEMENT_STEP
+				redraw = true
+				enemy := findEnemy(dungeon, &pos)
+				if enemy != nil {
+					playerAttack(enemy, player)
+					if enemy.stats.hp < 1 {
+						field.playground[enemy.pos.y][enemy.pos.x] = ' '
+						// var deadEnemy entity_t
+						// enemy = &deadEnemy
+						player.gold += rand.Int()%10 + 1
+						enemy.typeE = 5
+						player.maxHealth += enemy.stats.hpStealed
+						// enemy.pos.x = 0
+						// enemy.pos.y = 0
+						// enemy = nil
+					}
+				}
+			} else if field.playground[player.pos.y][player.pos.x] == WALL_CHAR ||
+				field.playground[player.pos.y][player.pos.x] == OUTER_AREA_CHAR {
+				// player->pos.x += sinf(player->view_angle) * MOVEMENT_STEP;
+				redraw = true
+				player.pos.y -= MOVEMENT_STEP
+			}
+			if !redraw {
+				// ch := field.playground[player.pos.y-MOVEMENT_STEP][player.pos.x]
+				// if ch == '$' || ch == '*' || ch == '?' || ch == '/' || ch == '^' {
+				// 	field.playground[player.pos.y][player.pos.x] = '@'
+				// } else {
+				field.playground[player.pos.y-MOVEMENT_STEP][player.pos.x] = ' '
+				field.playground[player.pos.y][player.pos.x] = '@'
+				// }
+			}
+		} else if key == 'a' || key == goncurses.KEY_LEFT {
 			player.pos.x -= MOVEMENT_STEP
-		}
-	} else if key == 'j' {
-		useFood(player)
-	} else if key == 'e' {
-		useScroll(player)
-	} else if key == 'k' {
-		usePotion(player)
-	} else if key == 'h' {
-		useWeapon(player, field)
-	}
-	player.turns++
-	if player.turns > 0 {
-		field.playground[field.player_spawn.pos.y][field.player_spawn.pos.x] = ' '
-		// field.player_spawn.pos.y
-	}
-	// if field.playground[player.pos.y][player.pos.x] == EXIT_CHAR {
-	// 	// generate_dungeon(dungeon)
-	// }
+			checkTile(dungeon, field, player)
 
+			if field.playground[player.pos.y][player.pos.x] == 'z' ||
+				field.playground[player.pos.y][player.pos.x] == 'v' ||
+				field.playground[player.pos.y][player.pos.x] == 'm' ||
+				field.playground[player.pos.y][player.pos.x] == 'O' ||
+				field.playground[player.pos.y][player.pos.x] == 'g' ||
+				field.playground[player.pos.y][player.pos.x] == 's' {
+				var pos position_t
+				pos.y, pos.x = player.pos.y, player.pos.x
+				player.pos.x += MOVEMENT_STEP
+				redraw = true
+				enemy := findEnemy(dungeon, &pos)
+				if enemy != nil {
+					playerAttack(enemy, player)
+					if enemy.stats.hp < 1 {
+						field.playground[enemy.pos.y][enemy.pos.x] = ' '
+						// var deadEnemy entity_t
+						// enemy = &deadEnemy
+						player.gold += rand.Int()%10 + 1
+						// enemy = nil
+						enemy.typeE = 5
+						player.maxHealth += enemy.stats.hpStealed
+						// enemy.pos.x = 0
+						// enemy.pos.y = 0
+					}
+				}
+			} else if field.playground[player.pos.y][player.pos.x] == WALL_CHAR ||
+				field.playground[player.pos.y][player.pos.x] == OUTER_AREA_CHAR {
+				redraw = true
+				player.pos.x += MOVEMENT_STEP
+			}
+			if !redraw {
+				// ch := field.playground[player.pos.y][player.pos.x+MOVEMENT_STEP]
+				// if ch == '$' || ch == '*' || ch == '?' || ch == '/' || ch == '^' {
+				// 	field.playground[player.pos.y][player.pos.x] = '@'
+				// } else {
+				field.playground[player.pos.y][player.pos.x+MOVEMENT_STEP] = ' '
+				field.playground[player.pos.y][player.pos.x] = '@'
+				// }
+			}
+		} else if key == 'd' || key == goncurses.KEY_RIGHT {
+			player.pos.x += MOVEMENT_STEP
+			checkTile(dungeon, field, player)
+			if field.playground[player.pos.y][player.pos.x] == 'z' ||
+				field.playground[player.pos.y][player.pos.x] == 'v' ||
+				field.playground[player.pos.y][player.pos.x] == 'm' ||
+				field.playground[player.pos.y][player.pos.x] == 'O' ||
+				field.playground[player.pos.y][player.pos.x] == 'g' ||
+				field.playground[player.pos.y][player.pos.x] == 's' {
+				var pos position_t
+				pos.y, pos.x = player.pos.y, player.pos.x
+				player.pos.x -= MOVEMENT_STEP
+				redraw = true
+				enemy := findEnemy(dungeon, &pos)
+				if enemy != nil {
+					playerAttack(enemy, player)
+					if enemy.stats.hp < 1 {
+						field.playground[enemy.pos.y][enemy.pos.x] = ' '
+						// var deadEnemy entity_t
+						// enemy = &deadEnemy
+						player.gold += rand.Int()%10 + 1
+						// enemy = nil
+						enemy.typeE = 5
+						player.maxHealth += enemy.stats.hpStealed
+						// enemy.pos.x = 0
+						// enemy.pos.y = 0
+					}
+				}
+			} else if field.playground[player.pos.y][player.pos.x] == WALL_CHAR ||
+				field.playground[player.pos.y][player.pos.x] == OUTER_AREA_CHAR {
+				redraw = true
+				player.pos.x -= MOVEMENT_STEP
+			}
+			if !redraw {
+				// ch := field.playground[player.pos.y][player.pos.x-MOVEMENT_STEP]
+				// if ch == '$' || ch == '*' || ch == '?' || ch == '/' || ch == '^' {
+				// 	field.playground[player.pos.y][player.pos.x] = '@'
+				// } else {
+				field.playground[player.pos.y][player.pos.x-MOVEMENT_STEP] = ' '
+				field.playground[player.pos.y][player.pos.x] = '@'
+				// }
+			}
+		} else if key == 'j' {
+			useFood(player)
+		} else if key == 'e' {
+			useScroll(player)
+		} else if key == 'k' {
+			usePotion(player)
+		} else if key == 'h' {
+			useWeapon(player, field)
+		}
+		player.turns++
+		// if player.turns > 0 {
+		// 	field.playground[field.player_spawn.pos.y][field.player_spawn.pos.x] = ' '
+		// 	// field.player_spawn.pos.y
+		// }
+		// if field.playground[player.pos.y][player.pos.x] == EXIT_CHAR {
+		// 	// generate_dungeon(dungeon)
+		// }
+	} else {
+		player.isSleeped = false
+	}
+}
+
+func playerAttack(enemy *entity_t, player *player_t) {
+	switch enemy.symbol {
+	case 'v':
+		if !enemy.stats.isFirst {
+			enemy.stats.isFirst = true
+		} else {
+			dodge := enemy.stats.agility - player.agility - rand.Int()%player.agility
+			if dodge < 1 {
+				enemy.stats.hp -= player.strength
+			}
+		}
+
+	default:
+		dodge := enemy.stats.agility - player.agility - rand.Int()%player.agility
+		if dodge < 1 {
+			enemy.stats.hp -= player.strength
+		}
+	}
+}
+
+func findEnemy(dungeon *dungeon_t, pos *position_t) (ptrEnemy *entity_t) {
+	for i := 0; i < dungeon.room_cnt; i++ {
+		enemies_cnt := dungeon.sequence[i].entities_cnt
+
+		for j := 0; j < enemies_cnt; j++ {
+			if dungeon.sequence[i].entities[j].typeE == ENEMY {
+				if dungeon.sequence[i].entities[j].pos.y == pos.y &&
+					dungeon.sequence[i].entities[j].pos.x == pos.x {
+					// break
+					// enemy := dungeon.sequence[i].entities[j]
+					return &dungeon.sequence[i].entities[j]
+				}
+			}
+		}
+	}
+
+	return
+}
+
+func firstMove(dungeon *dungeon_t, field *map_t, player *player_t) {
+	key := int(goncurses.StdScr().GetChar())
+	player_movement(dungeon, field, player, key)
 }

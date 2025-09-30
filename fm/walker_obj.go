@@ -20,6 +20,7 @@ type player_t struct {
 	potAgility   int
 	potMaxHealth int
 	gold         int
+	isSleeped    bool
 	// exp          int
 	// float view_angle;
 	// float fov;

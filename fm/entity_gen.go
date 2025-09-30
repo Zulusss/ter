@@ -145,6 +145,7 @@ func generateEnemyType(dungeon *dungeon_t, enemy *entity_t) {
 		enemy.stats.agility = 3 + 3*dungeon.level
 		enemy.stats.hp = 3 + 3*dungeon.level
 		enemy.stats.aggression = 2
+		enemy.stats.extraSym = int(str_item[rand.Int()%ITEM_POOL_LEN])
 	case 'g':
 		enemy.stats.strength = 1 + 1*dungeon.level
 		enemy.stats.agility = 3 + 3*dungeon.level
