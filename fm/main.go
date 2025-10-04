@@ -1,6 +1,10 @@
 package main
 
-import "github.com/gbin/goncurses"
+import (
+	"container/list"
+
+	"github.com/gbin/goncurses"
+)
 
 func main() {
 	var dungeon dungeon_t
@@ -9,6 +13,10 @@ func main() {
 	var player player_t
 	var key int
 	var statStr string
+	var msgStr list.List
+	msgStr.Init()
+	msgStr.PushFront("Welcome to rogue")
+	msgStr.PushFront("w a s d or arrows to control")
 
 	goncurses.Init()
 	goncurses.StdScr().Keypad(true)
@@ -34,16 +42,16 @@ func main() {
 	for key != ESC {
 		// goncurses.StdScr().MovePrint(0, 0, "DUNGEON GENERATED...")
 
-		player_movement(&dungeon, &field, &player, key)
+		player_movement(&dungeon, &field, &player, key, &msgStr)
 		// checkTile(&dungeon, &field, &player)
 
 		checkPotion(&player)
 		enemyTurn(&dungeon, &field, &player)
-		render_screen(&field, &player, &screen)
+		render_screen(&field, &player, &screen, &dungeon)
 		createStatString(&dungeon, &player, &statStr)
 
 		// print_map(&field)
-		screen_print(&screen, &statStr)
+		screen_print(&screen, &statStr, &msgStr)
 		key = int(goncurses.StdScr().GetChar())
 	}
 	goncurses.End()

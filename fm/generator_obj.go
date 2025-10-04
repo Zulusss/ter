@@ -21,6 +21,7 @@ type map_t struct {
 	items_cnt    int
 	enemies      [MAX_ENEMIES_TOTAL]entity_t
 	enemies_cnt  int
+	visited      map[position_t]bool
 }
 
 type room_t struct {
@@ -34,6 +35,10 @@ type room_t struct {
 	entities     [MAX_ENTITIES_PER_ROOM]entity_t
 	entities_cnt int
 	isStart      bool
+	isLocked     bool
+	blueLock     bool
+	magentaLock  bool
+	cyanLock     bool
 }
 
 type corridor_t struct {
@@ -49,6 +54,7 @@ type dungeon_t struct {
 	sequence      [MAX_ROOMS_NUMBER]*room_t
 	corridors     [MAX_CORRIDORS_NUMBER]corridor_t
 	level         int
+	lockedDoors   [3]position_t
 }
 
 type inventory_t struct {

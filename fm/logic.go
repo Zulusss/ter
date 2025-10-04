@@ -1,18 +1,20 @@
 package main
 
 import (
+	"container/list"
 	"math"
 	"math/rand"
 )
 
-func checkTile(dungeon *dungeon_t, field *map_t, player *player_t) {
+func checkTile(dungeon *dungeon_t, field *map_t, player *player_t, msgStr *list.List) {
 	if field.playground[player.pos.y][player.pos.x] == '|' {
 		generateNewLevel(dungeon, field, player)
 	} else if field.playground[player.pos.y][player.pos.x] == '?' ||
 		field.playground[player.pos.y][player.pos.x] == '*' ||
 		field.playground[player.pos.y][player.pos.x] == '/' ||
-		field.playground[player.pos.y][player.pos.x] == '$' {
-		getItem(player, field)
+		field.playground[player.pos.y][player.pos.x] == '$' ||
+		field.playground[player.pos.y][player.pos.x] == '!' {
+		getItem(player, field, msgStr)
 		// if field.playground[player.pos.y][player.pos.x] != ' ' {
 		// 	field.playground[player.pos.y][player.pos.x] = '^'
 		// }
@@ -42,6 +44,9 @@ func generateNewLevel(dungeon *dungeon_t, field *map_t, player *player_t) {
 	print_map_created(MAP_HEIGHT + 7)
 	check_result := check_connectivity(dungeon)
 	print_connectivity_check_result(check_result, MAP_HEIGHT+9)
+	player.gotBlue = false
+	player.gotMagenta = false
+	player.gotCyan = false
 	// print_map(field)
 	// firstMove(dungeon, field, player)
 
@@ -62,7 +67,7 @@ func clearField(field *map_t) {
 	field.enemies_cnt = 0
 }
 
-func getItem(player *player_t, field *map_t) {
+func getItem(player *player_t, field *map_t, msgStr *list.List) {
 	var item entity_t
 	for i := 0; i < field.items_cnt; i++ {
 		if field.items[i].pos.x == player.pos.x && field.items[i].pos.y == player.pos.y {
@@ -139,6 +144,21 @@ func getItem(player *player_t, field *map_t) {
 					field.items[i] = item
 					field.playground[player.pos.y][player.pos.x] = ' '
 				}
+			case 51:
+				player.gotBlue = true
+				msgStr.PushFront("Found blue key")
+				field.items[i] = item
+				field.playground[player.pos.y][player.pos.x] = ' '
+			case 52:
+				player.gotMagenta = true
+				msgStr.PushFront("Found magenta key")
+				field.items[i] = item
+				field.playground[player.pos.y][player.pos.x] = ' '
+			case 53:
+				player.gotCyan = true
+				msgStr.PushFront("Found cyan key")
+				field.items[i] = item
+				field.playground[player.pos.y][player.pos.x] = ' '
 			}
 		}
 
@@ -152,7 +172,7 @@ func enemyTurn(dungeon *dungeon_t, field *map_t, player *player_t) {
 		for j := 0; j < enemies_cnt; j++ {
 			if dungeon.sequence[i].entities[j].typeE == ENEMY {
 				enemy := dungeon.sequence[i].entities[j]
-				distY, distX := checkAgr(&enemy, player)
+				distY, distX := checkAgr(&enemy, player, field)
 				if !enemy.stats.isChasing {
 					switch enemy.symbol {
 					case 'z':
@@ -444,14 +464,17 @@ func enemyAttack(enemy *entity_t, player *player_t) {
 	}
 }
 
-func checkAgr(enemy *entity_t, player *player_t) (int, int) {
+func checkAgr(enemy *entity_t, player *player_t, field *map_t) (int, int) {
 	// distY := int(math.Abs(float64(enemy.pos.y)) - float64(player.pos.y))
 	// distX := int(math.Abs(float64(enemy.pos.x)) - float64(player.pos.x))
 	distY := int(math.Abs(float64(enemy.pos.y - player.pos.y)))
 	distX := int(math.Abs(float64(enemy.pos.x - player.pos.x)))
 
 	if distY < enemy.stats.aggression && distX < enemy.stats.aggression {
-		enemy.stats.isChasing = true
+		enemyView := ComputeFOV(field, enemy.pos, enemy.stats.aggression)
+		if enemyView[player.pos] == true {
+			enemy.stats.isChasing = true
+		}
 	}
 	return distY, distX
 }

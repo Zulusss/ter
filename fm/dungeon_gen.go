@@ -296,3 +296,76 @@ func generate_top_to_bottom_corridor(dungeon *dungeon_t, top_room *room_t, botto
 	corridor.points[2] = third_point
 	corridor.points[3] = bottom_room.doors[TOP]
 }
+
+func generateLockedRooms(dungeon *dungeon_t) {
+	canBeLocked := make([]*room_t, 0)
+	for i := range dungeon.sequence {
+		if dungeon.sequence[i] != nil {
+			if dungeon.sequence[i].isStart {
+				continue
+			}
+			var count int
+			// var tmpRoom *room_t
+			for k := range dungeon.sequence[i].connections {
+
+				if dungeon.sequence[i].connections[k] != nil {
+					// tmpRoom = dungeon.sequence[i].connections[k]
+					count++
+				}
+			}
+
+			// for k := range dungeon.sequence[i].doors {
+
+			// }
+			if count == 1 {
+				canBeLocked = append(canBeLocked, dungeon.sequence[i])
+			}
+		}
+	}
+	if len(canBeLocked) == 1 {
+		canBeLocked[0].isLocked = true
+		canBeLocked[0].blueLock = true
+	} else if len(canBeLocked) == 2 {
+		index := rand.Int() % 2
+		if index == 0 {
+			canBeLocked[0].isLocked = true
+			canBeLocked[0].blueLock = true
+			canBeLocked[1].isLocked = true
+			canBeLocked[1].magentaLock = true
+		} else {
+			canBeLocked[0].isLocked = true
+			canBeLocked[1].blueLock = true
+			canBeLocked[1].isLocked = true
+			canBeLocked[0].magentaLock = true
+		}
+	} else if len(canBeLocked) == 3 {
+		index := rand.Int() % 3
+		canBeLocked[index].isLocked = true
+		canBeLocked[index].blueLock = true
+		for canBeLocked[index].isLocked {
+			index = rand.Int() % 3
+		}
+		canBeLocked[index].isLocked = true
+		canBeLocked[index].magentaLock = true
+		for canBeLocked[index].isLocked {
+			index = rand.Int() % 3
+		}
+		canBeLocked[index].isLocked = true
+		canBeLocked[index].cyanLock = true
+	} else if len(canBeLocked) > 3 {
+		num := len(canBeLocked) - 1
+		index := rand.Int() % num
+		canBeLocked[index].isLocked = true
+		canBeLocked[index].blueLock = true
+		for canBeLocked[index].isLocked {
+			index = rand.Int() % num
+		}
+		canBeLocked[index].isLocked = true
+		canBeLocked[index].magentaLock = true
+		for canBeLocked[index].isLocked {
+			index = rand.Int() % num
+		}
+		canBeLocked[index].isLocked = true
+		canBeLocked[index].cyanLock = true
+	}
+}

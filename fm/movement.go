@@ -1,6 +1,8 @@
 package main
 
 import (
+	"container/list"
+	"fmt"
 	"math/rand"
 
 	"github.com/gbin/goncurses"
@@ -10,6 +12,7 @@ func init_player(player *player_t, spawn_point *entity_t) {
 	var position position_t
 	position.x, position.y = spawn_point.pos.x, spawn_point.pos.y
 	player.pos = position
+	// spawn_point.pos = player.pos
 }
 
 func initInventory(player *player_t) {
@@ -252,12 +255,12 @@ func useWeapon(player *player_t, field *map_t) {
 	}
 }
 
-func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int) {
+func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int, msgStr *list.List) {
 	if !player.isSleeped {
 		var redraw bool
 		if key == 'w' || key == goncurses.KEY_UP {
 			player.pos.y -= MOVEMENT_STEP
-			checkTile(dungeon, field, player)
+			checkTile(dungeon, field, player, msgStr)
 
 			if field.playground[player.pos.y][player.pos.x] == 'z' ||
 				field.playground[player.pos.y][player.pos.x] == 'v' ||
@@ -274,14 +277,15 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 					playerAttack(enemy, player)
 					if enemy.stats.hp < 1 {
 						field.playground[enemy.pos.y][enemy.pos.x] = ' '
-						// var deadEnemy entity_t
-						// enemy = &deadEnemy
-						player.gold += rand.Int()%10 + 1
+						monsterGold := rand.Int()%10 + 1 + dungeon.level*3
+						player.gold += monsterGold
 						enemy.typeE = 5
 						player.maxHealth += enemy.stats.hpStealed
-						// enemy.pos.x = 0
-						// enemy.pos.y = 0
-						// enemy = nil
+						msg := fmt.Sprintf("You kill %c, you got %d gold.", enemy.symbol, monsterGold)
+						msgStr.PushFront(msg)
+						if msgStr.Len() > 2 {
+							msgStr.Remove(msgStr.Back())
+						}
 					}
 				}
 			} else if field.playground[player.pos.y][player.pos.x] == WALL_CHAR ||
@@ -289,6 +293,16 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 				// player->pos.x -= sinf(player->view_angle) * MOVEMENT_STEP;
 				redraw = true
 				player.pos.y += MOVEMENT_STEP
+			} else if field.playground[player.pos.y][player.pos.x] == 'x' {
+				var msg string
+				msg, redraw = checkDoor(dungeon, player)
+				msgStr.PushFront(msg)
+				if msgStr.Len() > 2 {
+					msgStr.Remove(msgStr.Back())
+				}
+				if redraw {
+					player.pos.y += MOVEMENT_STEP
+				}
 			}
 			if !redraw {
 				// ch := field.playground[player.pos.y+MOVEMENT_STEP][player.pos.x]
@@ -302,7 +316,7 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 		} else if key == 's' || key == goncurses.KEY_DOWN {
 			// player->pos.x -= sinf(player->view_angle) * MOVEMENT_STEP;
 			player.pos.y += MOVEMENT_STEP
-			checkTile(dungeon, field, player)
+			checkTile(dungeon, field, player, msgStr)
 
 			if field.playground[player.pos.y][player.pos.x] == 'z' ||
 				field.playground[player.pos.y][player.pos.x] == 'v' ||
@@ -319,14 +333,15 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 					playerAttack(enemy, player)
 					if enemy.stats.hp < 1 {
 						field.playground[enemy.pos.y][enemy.pos.x] = ' '
-						// var deadEnemy entity_t
-						// enemy = &deadEnemy
-						player.gold += rand.Int()%10 + 1
+						monsterGold := rand.Int()%10 + 1 + dungeon.level*3
+						player.gold += monsterGold
 						enemy.typeE = 5
 						player.maxHealth += enemy.stats.hpStealed
-						// enemy.pos.x = 0
-						// enemy.pos.y = 0
-						// enemy = nil
+						msg := fmt.Sprintf("You kill %c, you got %d gold", enemy.symbol, monsterGold)
+						msgStr.PushFront(msg)
+						if msgStr.Len() > 2 {
+							msgStr.Remove(msgStr.Back())
+						}
 					}
 				}
 			} else if field.playground[player.pos.y][player.pos.x] == WALL_CHAR ||
@@ -334,6 +349,16 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 				// player->pos.x += sinf(player->view_angle) * MOVEMENT_STEP;
 				redraw = true
 				player.pos.y -= MOVEMENT_STEP
+			} else if field.playground[player.pos.y][player.pos.x] == 'x' {
+				var msg string
+				msg, redraw = checkDoor(dungeon, player)
+				msgStr.PushFront(msg)
+				if msgStr.Len() > 2 {
+					msgStr.Remove(msgStr.Back())
+				}
+				if redraw {
+					player.pos.y -= MOVEMENT_STEP
+				}
 			}
 			if !redraw {
 				// ch := field.playground[player.pos.y-MOVEMENT_STEP][player.pos.x]
@@ -346,7 +371,7 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 			}
 		} else if key == 'a' || key == goncurses.KEY_LEFT {
 			player.pos.x -= MOVEMENT_STEP
-			checkTile(dungeon, field, player)
+			checkTile(dungeon, field, player, msgStr)
 
 			if field.playground[player.pos.y][player.pos.x] == 'z' ||
 				field.playground[player.pos.y][player.pos.x] == 'v' ||
@@ -363,20 +388,31 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 					playerAttack(enemy, player)
 					if enemy.stats.hp < 1 {
 						field.playground[enemy.pos.y][enemy.pos.x] = ' '
-						// var deadEnemy entity_t
-						// enemy = &deadEnemy
-						player.gold += rand.Int()%10 + 1
-						// enemy = nil
+						monsterGold := rand.Int()%10 + 1 + dungeon.level*3
+						player.gold += monsterGold
 						enemy.typeE = 5
 						player.maxHealth += enemy.stats.hpStealed
-						// enemy.pos.x = 0
-						// enemy.pos.y = 0
+						msg := fmt.Sprintf("You kill %c, you got %d gold", enemy.symbol, monsterGold)
+						msgStr.PushFront(msg)
+						if msgStr.Len() > 2 {
+							msgStr.Remove(msgStr.Back())
+						}
 					}
 				}
 			} else if field.playground[player.pos.y][player.pos.x] == WALL_CHAR ||
 				field.playground[player.pos.y][player.pos.x] == OUTER_AREA_CHAR {
 				redraw = true
 				player.pos.x += MOVEMENT_STEP
+			} else if field.playground[player.pos.y][player.pos.x] == 'x' {
+				var msg string
+				msg, redraw = checkDoor(dungeon, player)
+				msgStr.PushFront(msg)
+				if msgStr.Len() > 2 {
+					msgStr.Remove(msgStr.Back())
+				}
+				if redraw {
+					player.pos.x += MOVEMENT_STEP
+				}
 			}
 			if !redraw {
 				// ch := field.playground[player.pos.y][player.pos.x+MOVEMENT_STEP]
@@ -389,7 +425,7 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 			}
 		} else if key == 'd' || key == goncurses.KEY_RIGHT {
 			player.pos.x += MOVEMENT_STEP
-			checkTile(dungeon, field, player)
+			checkTile(dungeon, field, player, msgStr)
 			if field.playground[player.pos.y][player.pos.x] == 'z' ||
 				field.playground[player.pos.y][player.pos.x] == 'v' ||
 				field.playground[player.pos.y][player.pos.x] == 'm' ||
@@ -405,20 +441,31 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 					playerAttack(enemy, player)
 					if enemy.stats.hp < 1 {
 						field.playground[enemy.pos.y][enemy.pos.x] = ' '
-						// var deadEnemy entity_t
-						// enemy = &deadEnemy
-						player.gold += rand.Int()%10 + 1
-						// enemy = nil
+						monsterGold := rand.Int()%10 + 1 + dungeon.level*3
+						player.gold += monsterGold
 						enemy.typeE = 5
 						player.maxHealth += enemy.stats.hpStealed
-						// enemy.pos.x = 0
-						// enemy.pos.y = 0
+						msg := fmt.Sprintf("You kill %c, you got %d gold", enemy.symbol, monsterGold)
+						msgStr.PushFront(msg)
+						if msgStr.Len() > 2 {
+							msgStr.Remove(msgStr.Back())
+						}
 					}
 				}
 			} else if field.playground[player.pos.y][player.pos.x] == WALL_CHAR ||
 				field.playground[player.pos.y][player.pos.x] == OUTER_AREA_CHAR {
 				redraw = true
 				player.pos.x -= MOVEMENT_STEP
+			} else if field.playground[player.pos.y][player.pos.x] == 'x' {
+				var msg string
+				msg, redraw = checkDoor(dungeon, player)
+				msgStr.PushFront(msg)
+				if msgStr.Len() > 2 {
+					msgStr.Remove(msgStr.Back())
+				}
+				if redraw {
+					player.pos.x -= MOVEMENT_STEP
+				}
 			}
 			if !redraw {
 				// ch := field.playground[player.pos.y][player.pos.x-MOVEMENT_STEP]
@@ -490,7 +537,36 @@ func findEnemy(dungeon *dungeon_t, pos *position_t) (ptrEnemy *entity_t) {
 	return
 }
 
-func firstMove(dungeon *dungeon_t, field *map_t, player *player_t) {
-	key := int(goncurses.StdScr().GetChar())
-	player_movement(dungeon, field, player, key)
+func checkDoor(dungeon *dungeon_t, player *player_t) (string, bool) {
+	if player.pos.y == dungeon.lockedDoors[0].y && player.pos.x == dungeon.lockedDoors[0].x {
+		if player.gotBlue {
+			msg := "You open blue door."
+			return msg, false
+		} else {
+			msg := fmt.Sprintf("Need blue key.")
+			return msg, true
+		}
+	} else if player.pos.y == dungeon.lockedDoors[1].y && player.pos.x == dungeon.lockedDoors[1].x {
+		if player.gotMagenta {
+			msg := "You open magenta door."
+			return msg, false
+		} else {
+			msg := fmt.Sprintf("Need magenta key.")
+			return msg, true
+		}
+	} else if player.pos.y == dungeon.lockedDoors[2].y && player.pos.x == dungeon.lockedDoors[2].x {
+		if player.gotCyan {
+			msg := "You open cyan door."
+			return msg, false
+		} else {
+			msg := "Need cyan key."
+			return msg, true
+		}
+	}
+	return "fuck", false
 }
+
+// func firstMove(dungeon *dungeon_t, field *map_t, player *player_t) {
+// 	key := int(goncurses.StdScr().GetChar())
+// 	player_movement(dungeon, field, player, key)
+// }

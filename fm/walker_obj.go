@@ -21,6 +21,9 @@ type player_t struct {
 	potMaxHealth int
 	gold         int
 	isSleeped    bool
+	gotBlue      bool
+	gotMagenta   bool
+	gotCyan      bool
 	// exp          int
 	// float view_angle;
 	// float fov;

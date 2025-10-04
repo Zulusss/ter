@@ -46,9 +46,11 @@ func generate_entity_coords(room *room_t, pos *position_t) {
 
 func generate_entities(dungeon *dungeon_t) {
 	generate_player_pos(dungeon)
+	generateLockedRooms(dungeon)
 	generate_exit(dungeon)
 	generate_enemies(dungeon)
 	generate_items(dungeon)
+	generateKeys(dungeon)
 }
 
 func generate_player_pos(dungeon *dungeon_t) {
@@ -153,6 +155,62 @@ func generateEnemyType(dungeon *dungeon_t, enemy *entity_t) {
 		enemy.stats.aggression = 3
 
 	}
+
+}
+
+func generateKeys(dungeon *dungeon_t) {
+
+	for i := 0; i < dungeon.room_cnt; i++ {
+		if dungeon.sequence[i].isStart {
+			continue
+		}
+		if dungeon.sequence[i].blueLock {
+			index := rand.Int() % (dungeon.room_cnt - 1)
+			for dungeon.sequence[index].isLocked || dungeon.sequence[index].isStart {
+				index = rand.Int() % (dungeon.room_cnt - 1)
+			}
+			var blueKey entity_t
+			blueKey.typeI = 51
+			generateNewKey(dungeon.sequence[index], &blueKey)
+			cur_room_entity_cnt := dungeon.sequence[index].entities_cnt
+
+			dungeon.sequence[index].entities[cur_room_entity_cnt] = blueKey
+			dungeon.sequence[index].entities_cnt++
+
+		} else if dungeon.sequence[i].magentaLock {
+			index := rand.Int() % (dungeon.room_cnt - 1)
+			for dungeon.sequence[index].isStart || dungeon.sequence[index].magentaLock {
+				index = rand.Int() % (dungeon.room_cnt - 1)
+			}
+			var magentaKey entity_t
+			magentaKey.typeI = 52
+			generateNewKey(dungeon.sequence[index], &magentaKey)
+
+			cur_room_entity_cnt := dungeon.sequence[index].entities_cnt
+
+			dungeon.sequence[index].entities[cur_room_entity_cnt] = magentaKey
+			dungeon.sequence[index].entities_cnt++
+		} else if dungeon.sequence[i].cyanLock {
+			index := rand.Int() % (dungeon.room_cnt - 1)
+			for dungeon.sequence[index].isStart || dungeon.sequence[index].cyanLock {
+				index = rand.Int() % (dungeon.room_cnt - 1)
+			}
+			var cyanKey entity_t
+			cyanKey.typeI = 53
+			generateNewKey(dungeon.sequence[index], &cyanKey)
+
+			cur_room_entity_cnt := dungeon.sequence[index].entities_cnt
+
+			dungeon.sequence[index].entities[cur_room_entity_cnt] = cyanKey
+			dungeon.sequence[index].entities_cnt++
+		}
+	}
+}
+
+func generateNewKey(room *room_t, item *entity_t) {
+	item.typeE = ITEM
+	item.symbol = '!'
+	generate_entity_coords(room, &item.pos)
 
 }
 
