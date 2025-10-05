@@ -77,76 +77,112 @@ func getItem(player *player_t, field *map_t, msgStr *list.List) {
 					player.inventory.food = append(player.inventory.food, 10)
 					field.items[i] = item
 					field.playground[player.pos.y][player.pos.x] = ' '
+					msgStr.PushFront("You found apple.")
+				} else {
+					msgStr.PushFront("Too many food.")
 				}
 			case 11:
 				if len(player.inventory.food) < 9 {
 					player.inventory.food = append(player.inventory.food, 11)
 					field.items[i] = item
 					field.playground[player.pos.y][player.pos.x] = ' '
+					msgStr.PushFront("You found banana.")
+				} else {
+					msgStr.PushFront("Too many food.")
 				}
 			case 12:
 				if len(player.inventory.food) < 9 {
 					player.inventory.food = append(player.inventory.food, 12)
 					field.items[i] = item
 					field.playground[player.pos.y][player.pos.x] = ' '
+					msgStr.PushFront("You found cucumber.")
+				} else {
+					msgStr.PushFront("Too many food.")
 				}
 			case 20:
 				if len(player.inventory.scroll) < 9 {
 					player.inventory.scroll = append(player.inventory.scroll, 20)
 					field.items[i] = item
 					field.playground[player.pos.y][player.pos.x] = ' '
+					msgStr.PushFront("You found scroll of strength.")
+				} else {
+					msgStr.PushFront("Too many scrolls.")
 				}
 			case 21:
 				if len(player.inventory.scroll) < 9 {
 					player.inventory.scroll = append(player.inventory.scroll, 21)
 					field.items[i] = item
 					field.playground[player.pos.y][player.pos.x] = ' '
+					msgStr.PushFront("You found scroll of agility.")
+				} else {
+					msgStr.PushFront("Too many scrolls.")
 				}
 			case 22:
 				if len(player.inventory.scroll) < 9 {
 					player.inventory.scroll = append(player.inventory.scroll, 22)
 					field.items[i] = item
 					field.playground[player.pos.y][player.pos.x] = ' '
+					msgStr.PushFront("You found scroll of max health.")
+				} else {
+					msgStr.PushFront("Too many scrolls.")
 				}
 			case 30:
 				if len(player.inventory.weapon) < 9 {
 					player.inventory.weapon = append(player.inventory.weapon, 30)
 					field.items[i] = item
 					field.playground[player.pos.y][player.pos.x] = ' '
+					msgStr.PushFront("You found sword.")
+				} else {
+					msgStr.PushFront("Too many weapon.")
 				}
 			case 31:
 				if len(player.inventory.weapon) < 9 {
 					player.inventory.weapon = append(player.inventory.weapon, 31)
 					field.items[i] = item
 					field.playground[player.pos.y][player.pos.x] = ' '
+					msgStr.PushFront("You found axe.")
+				} else {
+					msgStr.PushFront("Too many weapon.")
 				}
 			case 32:
 				if len(player.inventory.weapon) < 9 {
 					player.inventory.weapon = append(player.inventory.weapon, 32)
 					field.items[i] = item
 					field.playground[player.pos.y][player.pos.x] = ' '
+					msgStr.PushFront("You found hammer.")
+				} else {
+					msgStr.PushFront("Too many weapon.")
 				}
 			case 40:
 				if len(player.inventory.potion) < 9 {
 					player.inventory.potion = append(player.inventory.potion, 40)
 					field.items[i] = item
 					field.playground[player.pos.y][player.pos.x] = ' '
+					msgStr.PushFront("You found potion of strength.")
+				} else {
+					msgStr.PushFront("Too many potions.")
 				}
 			case 41:
 				if len(player.inventory.potion) < 9 {
 					player.inventory.potion = append(player.inventory.potion, 41)
 					field.items[i] = item
 					field.playground[player.pos.y][player.pos.x] = ' '
+					msgStr.PushFront("You found potion of agility.")
+				} else {
+					msgStr.PushFront("Too many potions.")
 				}
 			case 42:
 				if len(player.inventory.potion) < 9 {
 					player.inventory.potion = append(player.inventory.potion, 42)
 					field.items[i] = item
 					field.playground[player.pos.y][player.pos.x] = ' '
+					msgStr.PushFront("You found potion of max health.")
+				} else {
+					msgStr.PushFront("Too many potions.")
 				}
 			case 51:
 				player.gotBlue = true
-				msgStr.PushFront("Found blue key")
+				msgStr.PushFront("Found blue key.")
 				field.items[i] = item
 				field.playground[player.pos.y][player.pos.x] = ' '
 			case 52:
@@ -472,7 +508,7 @@ func checkAgr(enemy *entity_t, player *player_t, field *map_t) (int, int) {
 
 	if distY < enemy.stats.aggression && distX < enemy.stats.aggression {
 		enemyView := ComputeFOV(field, enemy.pos, enemy.stats.aggression)
-		if enemyView[player.pos] == true {
+		if enemyView[player.pos] {
 			enemy.stats.isChasing = true
 		}
 	}

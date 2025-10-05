@@ -220,6 +220,9 @@ func generate_items(dungeon *dungeon_t) {
 
 		for j := 0; j < items_cnt; j++ {
 			var item entity_t
+			if dungeon.sequence[i].isStart {
+				break
+			}
 
 			generate_item(dungeon.sequence[i], &item)
 

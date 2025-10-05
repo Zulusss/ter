@@ -496,6 +496,9 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 	} else {
 		player.isSleeped = false
 	}
+	if msgStr.Len() > 2 {
+		msgStr.Remove(msgStr.Back())
+	}
 }
 
 func playerAttack(enemy *entity_t, player *player_t) {
@@ -543,7 +546,7 @@ func checkDoor(dungeon *dungeon_t, player *player_t) (string, bool) {
 			msg := "You open blue door."
 			return msg, false
 		} else {
-			msg := fmt.Sprintf("Need blue key.")
+			msg := "Need blue key."
 			return msg, true
 		}
 	} else if player.pos.y == dungeon.lockedDoors[1].y && player.pos.x == dungeon.lockedDoors[1].x {
@@ -551,7 +554,7 @@ func checkDoor(dungeon *dungeon_t, player *player_t) (string, bool) {
 			msg := "You open magenta door."
 			return msg, false
 		} else {
-			msg := fmt.Sprintf("Need magenta key.")
+			msg := "Need magenta key."
 			return msg, true
 		}
 	} else if player.pos.y == dungeon.lockedDoors[2].y && player.pos.x == dungeon.lockedDoors[2].x {
