@@ -43,12 +43,15 @@ func useFood(player *player_t) {
 	if num > 0 && num <= len(player.inventory.food) {
 		if player.inventory.food[num-1] == 10 {
 			player.health += 5
+			player.foodConsumed++
 			player.inventory.food = append(player.inventory.food[:num-1], player.inventory.food[num:]...)
 		} else if player.inventory.food[num-1] == 11 {
 			player.health += 10
+			player.foodConsumed++
 			player.inventory.food = append(player.inventory.food[:num-1], player.inventory.food[num:]...)
 		} else if player.inventory.food[num-1] == 12 {
 			player.health += 15
+			player.foodConsumed++
 			player.inventory.food = append(player.inventory.food[:num-1], player.inventory.food[num:]...)
 		}
 	}
@@ -71,12 +74,15 @@ func useScroll(player *player_t) {
 	if num > 0 && num <= len(player.inventory.scroll) {
 		if player.inventory.scroll[num-1] == 20 {
 			player.strength += 5
+			player.scrollsRead++
 			player.inventory.scroll = append(player.inventory.scroll[:num-1], player.inventory.scroll[num:]...)
 		} else if player.inventory.scroll[num-1] == 21 {
 			player.agility += 5
+			player.scrollsRead++
 			player.inventory.scroll = append(player.inventory.scroll[:num-1], player.inventory.scroll[num:]...)
 		} else if player.inventory.scroll[num-1] == 22 {
 			player.maxHealth += 5
+			player.scrollsRead++
 			player.inventory.scroll = append(player.inventory.scroll[:num-1], player.inventory.scroll[num:]...)
 		}
 	}
@@ -100,20 +106,23 @@ func usePotion(player *player_t) {
 		if player.inventory.potion[num-1] == 40 {
 			if player.potStrenght == 0 {
 				player.strength += 5
+				player.potionsConsumed++
 			}
 			player.potStrenght = 10
 			player.inventory.potion = append(player.inventory.potion[:num-1], player.inventory.potion[num:]...)
 		} else if player.inventory.potion[num-1] == 41 {
 			if player.potAgility == 0 {
 				player.agility += 5
+				player.potionsConsumed++
 			}
 			player.potAgility = 10
 			player.inventory.potion = append(player.inventory.potion[:num-1], player.inventory.potion[num:]...)
 		} else if player.inventory.potion[num-1] == 42 {
 			if player.potMaxHealth == 0 {
 				player.maxHealth += 5
+				player.potionsConsumed++
 			}
-			player.maxHealth = 10
+			player.potMaxHealth = 10
 			player.inventory.potion = append(player.inventory.potion[:num-1], player.inventory.potion[num:]...)
 		}
 	}
@@ -258,6 +267,7 @@ func useWeapon(player *player_t, field *map_t) {
 func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int, msgStr *list.List) {
 	if !player.isSleeped {
 		var redraw bool
+		redrawItems(field)
 		if key == 'w' || key == goncurses.KEY_UP {
 			player.pos.y -= MOVEMENT_STEP
 			checkTile(dungeon, field, player, msgStr)
@@ -276,6 +286,7 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 				if enemy != nil {
 					playerAttack(enemy, player)
 					if enemy.stats.hp < 1 {
+						player.monsterKill++
 						field.playground[enemy.pos.y][enemy.pos.x] = ' '
 						monsterGold := rand.Int()%10 + 1 + dungeon.level*3
 						player.gold += monsterGold
@@ -305,6 +316,7 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 				}
 			}
 			if !redraw {
+				player.turns++
 				// ch := field.playground[player.pos.y+MOVEMENT_STEP][player.pos.x]
 				// if ch == '$' || ch == '*' || ch == '?' || ch == '/' || ch == '^' {
 				// 	field.playground[player.pos.y][player.pos.x] = '@'
@@ -332,6 +344,7 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 				if enemy != nil {
 					playerAttack(enemy, player)
 					if enemy.stats.hp < 1 {
+						player.monsterKill++
 						field.playground[enemy.pos.y][enemy.pos.x] = ' '
 						monsterGold := rand.Int()%10 + 1 + dungeon.level*3
 						player.gold += monsterGold
@@ -361,6 +374,7 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 				}
 			}
 			if !redraw {
+				player.turns++
 				// ch := field.playground[player.pos.y-MOVEMENT_STEP][player.pos.x]
 				// if ch == '$' || ch == '*' || ch == '?' || ch == '/' || ch == '^' {
 				// 	field.playground[player.pos.y][player.pos.x] = '@'
@@ -387,6 +401,7 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 				if enemy != nil {
 					playerAttack(enemy, player)
 					if enemy.stats.hp < 1 {
+						player.monsterKill++
 						field.playground[enemy.pos.y][enemy.pos.x] = ' '
 						monsterGold := rand.Int()%10 + 1 + dungeon.level*3
 						player.gold += monsterGold
@@ -415,6 +430,7 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 				}
 			}
 			if !redraw {
+				player.turns++
 				// ch := field.playground[player.pos.y][player.pos.x+MOVEMENT_STEP]
 				// if ch == '$' || ch == '*' || ch == '?' || ch == '/' || ch == '^' {
 				// 	field.playground[player.pos.y][player.pos.x] = '@'
@@ -440,6 +456,7 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 				if enemy != nil {
 					playerAttack(enemy, player)
 					if enemy.stats.hp < 1 {
+						player.monsterKill++
 						field.playground[enemy.pos.y][enemy.pos.x] = ' '
 						monsterGold := rand.Int()%10 + 1 + dungeon.level*3
 						player.gold += monsterGold
@@ -468,6 +485,7 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 				}
 			}
 			if !redraw {
+				player.turns++
 				// ch := field.playground[player.pos.y][player.pos.x-MOVEMENT_STEP]
 				// if ch == '$' || ch == '*' || ch == '?' || ch == '/' || ch == '^' {
 				// 	field.playground[player.pos.y][player.pos.x] = '@'
@@ -485,7 +503,8 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 		} else if key == 'h' {
 			useWeapon(player, field)
 		}
-		player.turns++
+
+		// redrawItems(field)
 		// if player.turns > 0 {
 		// 	field.playground[field.player_spawn.pos.y][field.player_spawn.pos.x] = ' '
 		// 	// field.player_spawn.pos.y
@@ -501,6 +520,13 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 	}
 }
 
+func redrawItems(field *map_t) {
+	for i := 0; i < field.items_cnt; i++ {
+		if field.items[i].typeE == ITEM {
+			field.playground[field.items[i].pos.y][field.items[i].pos.x] = field.items[i].symbol
+		}
+	}
+}
 func playerAttack(enemy *entity_t, player *player_t) {
 	switch enemy.symbol {
 	case 'v':
@@ -510,6 +536,7 @@ func playerAttack(enemy *entity_t, player *player_t) {
 			dodge := enemy.stats.agility - player.agility - rand.Int()%player.agility
 			if dodge < 1 {
 				enemy.stats.hp -= player.strength
+				player.strikesToEnemy++
 			}
 		}
 
@@ -517,6 +544,7 @@ func playerAttack(enemy *entity_t, player *player_t) {
 		dodge := enemy.stats.agility - player.agility - rand.Int()%player.agility
 		if dodge < 1 {
 			enemy.stats.hp -= player.strength
+			player.strikesToEnemy++
 		}
 	}
 }

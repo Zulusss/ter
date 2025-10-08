@@ -2,8 +2,10 @@ package main
 
 import (
 	"container/list"
+	"fmt"
 	"math"
 	"math/rand"
+	"os"
 )
 
 func checkTile(dungeon *dungeon_t, field *map_t, player *player_t, msgStr *list.List) {
@@ -47,6 +49,15 @@ func generateNewLevel(dungeon *dungeon_t, field *map_t, player *player_t) {
 	player.gotBlue = false
 	player.gotMagenta = false
 	player.gotCyan = false
+
+	Session := saveSessionFromGame(dungeon, field, player)
+	Store, _ := NewStore()
+
+	err := Store.SaveSession(Session)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	// print_map(field)
 	// firstMove(dungeon, field, player)
 
@@ -478,6 +489,7 @@ func enemyAttack(enemy *entity_t, player *player_t) {
 			dodge := player.agility - enemy.stats.agility - rand.Int()%enemy.stats.agility
 			if dodge < 1 {
 				player.health -= enemy.stats.strength
+				player.strikesToPlayer++
 			}
 			enemy.stats.isFirst = true
 		} else {
@@ -487,6 +499,7 @@ func enemyAttack(enemy *entity_t, player *player_t) {
 		dodge := player.agility - enemy.stats.agility - rand.Int()%enemy.stats.agility
 		if dodge < 1 {
 			player.health -= enemy.stats.strength
+			player.strikesToPlayer++
 			if enemy.symbol == 's' {
 				if rand.Int()%4 == 0 {
 					player.isSleeped = true

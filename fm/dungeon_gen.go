@@ -16,7 +16,6 @@ func generate_dungeon(dungeon *dungeon_t) {
 }
 
 func init_dungeon(dungeon *dungeon_t) {
-	// dungeon->room_cnt = 0;
 
 	for i := 0; i < ROOMS_PER_SIDE+2; i++ {
 		for j := 0; j < ROOMS_PER_SIDE+2; j++ {
@@ -27,8 +26,6 @@ func init_dungeon(dungeon *dungeon_t) {
 				dungeon.rooms[i][j].doors[k].x = UNINITIALIZED
 				dungeon.rooms[i][j].doors[k].y = UNINITIALIZED
 			}
-
-			// dungeon->rooms[i][j].entities_cnt = 0;
 		}
 	}
 	for i := 0; i < MAX_ROOMS_NUMBER; i++ {
@@ -37,8 +34,6 @@ func init_dungeon(dungeon *dungeon_t) {
 	for i := 0; i < MAX_CORRIDORS_NUMBER; i++ {
 		dungeon.corridors[i].typeE = UNINITIALIZED
 	}
-
-	// dungeon->corridors_cnt = 0;
 }
 
 func generate_sectors(dungeon *dungeon_t) {
@@ -84,16 +79,8 @@ func generate_sectors(dungeon *dungeon_t) {
 	}
 }
 
-// func room_placement_comparator(r1 *room_t, r2 *room_t) bool {
-//     left_room := r1;
-//     right_room := r2;
-
-//     return left_room.sector > right_room.sector;
-// }
-
 func generate_connections(dungeon *dungeon_t) {
 	generate_primary_connections(dungeon)
-
 	generate_secondary_connections(dungeon)
 	disconnectRooms(dungeon)
 }
@@ -127,7 +114,6 @@ func disconnectRooms(dungeon *dungeon_t) {
 	y := (rand.Int() % 3) + 1
 	x := (rand.Int() % 3) + 1
 	room := &dungeon.rooms[y][x]
-	// connCount := 0
 	roomConns := make([]*room_t, 0)
 	for i := 0; i < 4; i++ {
 		if room.connections[i] != nil {
@@ -137,57 +123,12 @@ func disconnectRooms(dungeon *dungeon_t) {
 	if len(roomConns) == 2 {
 		index := rand.Int() % 2
 		temp := roomConns[index]
-		if temp.connections[0] != nil {
-			if temp.connections[0] == room {
-				temp.connections[0] = nil
-				room.connections[2] = nil
-			}
-		}
-		if temp.connections[1] != nil {
-			if temp.connections[1] == room {
-				temp.connections[1] = nil
-				room.connections[3] = nil
-			}
-		}
-		if temp.connections[2] != nil {
-			if temp.connections[2] == room {
-				temp.connections[2] = nil
-				room.connections[0] = nil
-			}
-		}
-		if temp.connections[3] != nil {
-			if temp.connections[3] == room {
-				temp.connections[3] = nil
-				room.connections[1] = nil
-			}
-		}
+		isolateRoom(temp, room)
+
 	} else if len(roomConns) == 3 {
 		index := rand.Int() % 3
 		temp := roomConns[index]
-		if temp.connections[0] != nil {
-			if temp.connections[0] == room {
-				temp.connections[0] = nil
-				room.connections[2] = nil
-			}
-		}
-		if temp.connections[1] != nil {
-			if temp.connections[1] == room {
-				temp.connections[1] = nil
-				room.connections[3] = nil
-			}
-		}
-		if temp.connections[2] != nil {
-			if temp.connections[2] == room {
-				temp.connections[2] = nil
-				room.connections[0] = nil
-			}
-		}
-		if temp.connections[3] != nil {
-			if temp.connections[3] == room {
-				temp.connections[3] = nil
-				room.connections[1] = nil
-			}
-		}
+		isolateRoom(temp, room)
 
 		index2 := rand.Int() % 3
 		for index2 == index {
@@ -195,57 +136,12 @@ func disconnectRooms(dungeon *dungeon_t) {
 		}
 
 		temp = roomConns[index2]
-		if temp.connections[0] != nil {
-			if temp.connections[0] == room {
-				temp.connections[0] = nil
-				room.connections[2] = nil
-			}
-		}
-		if temp.connections[1] != nil {
-			if temp.connections[1] == room {
-				temp.connections[1] = nil
-				room.connections[3] = nil
-			}
-		}
-		if temp.connections[2] != nil {
-			if temp.connections[2] == room {
-				temp.connections[2] = nil
-				room.connections[0] = nil
-			}
-		}
-		if temp.connections[3] != nil {
-			if temp.connections[3] == room {
-				temp.connections[3] = nil
-				room.connections[1] = nil
-			}
-		}
+		isolateRoom(temp, room)
+
 	} else if len(roomConns) == 4 {
 		index := rand.Int() % 4
 		temp := roomConns[index]
-		if temp.connections[0] != nil {
-			if temp.connections[0] == room {
-				temp.connections[0] = nil
-				room.connections[2] = nil
-			}
-		}
-		if temp.connections[1] != nil {
-			if temp.connections[1] == room {
-				temp.connections[1] = nil
-				room.connections[3] = nil
-			}
-		}
-		if temp.connections[2] != nil {
-			if temp.connections[2] == room {
-				temp.connections[2] = nil
-				room.connections[0] = nil
-			}
-		}
-		if temp.connections[3] != nil {
-			if temp.connections[3] == room {
-				temp.connections[3] = nil
-				room.connections[1] = nil
-			}
-		}
+		isolateRoom(temp, room)
 
 		index2 := rand.Int() % 4
 		for index2 == index {
@@ -253,59 +149,40 @@ func disconnectRooms(dungeon *dungeon_t) {
 		}
 
 		temp = roomConns[index2]
-		if temp.connections[0] != nil {
-			if temp.connections[0] == room {
-				temp.connections[0] = nil
-				room.connections[2] = nil
-			}
-		}
-		if temp.connections[1] != nil {
-			if temp.connections[1] == room {
-				temp.connections[1] = nil
-				room.connections[3] = nil
-			}
-		}
-		if temp.connections[2] != nil {
-			if temp.connections[2] == room {
-				temp.connections[2] = nil
-				room.connections[0] = nil
-			}
-		}
-		if temp.connections[3] != nil {
-			if temp.connections[3] == room {
-				temp.connections[3] = nil
-				room.connections[1] = nil
-			}
-		}
+		isolateRoom(temp, room)
+
 		index3 := rand.Int() % 4
 		for index3 == index || index3 == index2 {
 			index3 = rand.Int() % 4
 		}
-
 		temp = roomConns[index3]
-		if temp.connections[0] != nil {
-			if temp.connections[0] == room {
-				temp.connections[0] = nil
-				room.connections[2] = nil
-			}
+		isolateRoom(temp, room)
+	}
+}
+
+func isolateRoom(temp *room_t, room *room_t) {
+	if temp.connections[0] != nil {
+		if temp.connections[0] == room {
+			temp.connections[0] = nil
+			room.connections[2] = nil
 		}
-		if temp.connections[1] != nil {
-			if temp.connections[1] == room {
-				temp.connections[1] = nil
-				room.connections[3] = nil
-			}
+	}
+	if temp.connections[1] != nil {
+		if temp.connections[1] == room {
+			temp.connections[1] = nil
+			room.connections[3] = nil
 		}
-		if temp.connections[2] != nil {
-			if temp.connections[2] == room {
-				temp.connections[2] = nil
-				room.connections[0] = nil
-			}
+	}
+	if temp.connections[2] != nil {
+		if temp.connections[2] == room {
+			temp.connections[2] = nil
+			room.connections[0] = nil
 		}
-		if temp.connections[3] != nil {
-			if temp.connections[3] == room {
-				temp.connections[3] = nil
-				room.connections[1] = nil
-			}
+	}
+	if temp.connections[3] != nil {
+		if temp.connections[3] == room {
+			temp.connections[3] = nil
+			room.connections[1] = nil
 		}
 	}
 }
@@ -506,10 +383,6 @@ func generateLockedRooms(dungeon *dungeon_t) {
 					count++
 				}
 			}
-
-			// for k := range dungeon.sequence[i].doors {
-
-			// }
 			if count == 1 {
 				canBeLocked = append(canBeLocked, dungeon.sequence[i])
 			}

@@ -96,6 +96,14 @@ func generate_exit(dungeon *dungeon_t) {
 func generate_enemies(dungeon *dungeon_t) {
 	for i := 0; i < dungeon.room_cnt; i++ {
 		enemies_cnt := rand.Int() % MAX_ENEMIES_PER_ROOM
+		tryCount := dungeon.level
+		for tryCount > 0 {
+			if rand.Int()%10 == 0 {
+				enemies_cnt++
+				break
+			}
+			tryCount--
+		}
 
 		for j := 0; j < enemies_cnt; j++ {
 			var enemy entity_t

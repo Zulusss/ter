@@ -2,6 +2,7 @@ package main
 
 import (
 	"container/list"
+	// "log"
 
 	"github.com/gbin/goncurses"
 )
@@ -53,6 +54,22 @@ func main() {
 		// print_map(&field)
 		screen_print(&screen, &statStr, &msgStr)
 		key = int(goncurses.StdScr().GetChar())
+		if key == 'z' {
+			// var savedDungeon dungeon_t
+			// var savedField map_t
+			// var savedPlayer player_t
+			savedDungeon, savedField, savedPlayer, err := LoadGame()
+			if err != nil {
+				msgStr.PushFront("No saved games.")
+			} else {
+				dungeon = *savedDungeon
+				field = *savedField
+				player = *savedPlayer
+				msgStr.PushFront("Game loaded.")
+				print_map(&field)
+				key = int(goncurses.StdScr().GetChar())
+			}
+		}
 	}
 	goncurses.End()
 }
