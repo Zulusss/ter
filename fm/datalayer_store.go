@@ -81,34 +81,39 @@ func saveSessionFromGame(dungeon *dungeon_t, field *map_t, player *player_t) *Se
 	SessionToSave.Dungeon.Room_cnt = dungeon.room_cnt
 	SessionToSave.Dungeon.Corridors_cnt = dungeon.corridors_cnt
 	SessionToSave.Dungeon.Level = dungeon.level
-	roomSlice := make([]*room_t, 0)
-	RoomSlice := make([]*Room_t, 0)
+	// roomSlice := make([]*room_t, 0)
+	// RoomSlice := make([]*Room_t, 0)
+	var cnt int
 	for i := 1; i < 4; i++ {
 		for j := 1; j < 4; j++ {
 			convertRoom(&dungeon.rooms[i][j], &SessionToSave.Dungeon.Rooms[i][j])
-			roomSlice = append(roomSlice, &dungeon.rooms[i][j])
-			RoomSlice = append(RoomSlice, &SessionToSave.Dungeon.Rooms[i][j])
+			var Room Room_t
+			Room = SessionToSave.Dungeon.Rooms[i][j]
+			SessionToSave.Dungeon.Sequence[cnt] = Room
+			cnt++
+			// roomSlice = append(roomSlice, &dungeon.rooms[i][j])
+			// RoomSlice = append(RoomSlice, &SessionToSave.Dungeon.Rooms[i][j])
 		}
 	}
-	for i := range roomSlice {
-		for k := range roomSlice[i].connections {
-			for l := range roomSlice {
-				if roomSlice[i].connections[k] == roomSlice[l] {
-					RoomSlice[i].Connections[k] = RoomSlice[l]
-					break
-				}
-			}
-		}
-	}
+	// for i := range roomSlice {
+	// 	for k := range roomSlice[i].connections {
+	// 		for l := range roomSlice {
+	// 			if roomSlice[i].connections[k] == roomSlice[l] {
+	// 				RoomSlice[i].Connections[k] = RoomSlice[l]
+	// 				break
+	// 			}
+	// 		}
+	// 	}
+	// }
 
-	for i := range dungeon.sequence {
-		for j := range roomSlice {
-			if dungeon.sequence[i] == roomSlice[j] {
-				SessionToSave.Dungeon.Sequence[i] = RoomSlice[j]
-				break
-			}
-		}
-	}
+	// for i := range dungeon.sequence {
+	// 	for j := range roomSlice {
+	// 		if dungeon.sequence[i] == roomSlice[j] {
+	// 			SessionToSave.Dungeon.Sequence[i] = RoomSlice[j]
+	// 			break
+	// 		}
+	// 	}
+	// }
 
 	for i := range dungeon.corridors {
 		convertCorridor(&dungeon.corridors[i], &SessionToSave.Dungeon.Corridors[i])
@@ -258,34 +263,37 @@ func loadSessionToGame(session *Session) (*dungeon_t, *map_t, *player_t) {
 	dungeon.level = session.Dungeon.Level
 	dungeon.room_cnt = session.Dungeon.Room_cnt
 	dungeon.corridors_cnt = session.Dungeon.Corridors_cnt
-	roomSlice := make([]*room_t, 0)
-	RoomSlice := make([]*Room_t, 0)
+	var cnt int
+	// roomSlice := make([]*room_t, 0)
+	// RoomSlice := make([]*Room_t, 0)
 	for i := 1; i < 4; i++ {
 		for j := 1; j < 4; j++ {
 			recoverRoom(&dungeon.rooms[i][j], &session.Dungeon.Rooms[i][j])
-			roomSlice = append(roomSlice, &dungeon.rooms[i][j])
-			RoomSlice = append(RoomSlice, &session.Dungeon.Rooms[i][j])
+			dungeon.sequence[cnt] = &dungeon.rooms[i][j]
+			cnt++
+			// roomSlice = append(roomSlice, &dungeon.rooms[i][j])
+			// RoomSlice = append(RoomSlice, &session.Dungeon.Rooms[i][j])
 		}
 	}
-	for i := range RoomSlice {
-		for k := range RoomSlice[i].Connections {
-			for l := range RoomSlice {
-				if RoomSlice[i].Connections[k] == RoomSlice[l] {
-					roomSlice[i].connections[k] = roomSlice[l]
-					break
-				}
-			}
-		}
-	}
+	// for i := range RoomSlice {
+	// 	for k := range RoomSlice[i].Connections {
+	// 		for l := range RoomSlice {
+	// 			if RoomSlice[i].Connections[k] == RoomSlice[l] {
+	// 				roomSlice[i].connections[k] = roomSlice[l]
+	// 				break
+	// 			}
+	// 		}
+	// 	}
+	// }
 
-	for i := range session.Dungeon.Sequence {
-		for j := range RoomSlice {
-			if session.Dungeon.Sequence[i] == RoomSlice[j] {
-				dungeon.sequence[i] = roomSlice[j]
-				break
-			}
-		}
-	}
+	// for i := range session.Dungeon.Sequence {
+	// 	for j := range RoomSlice {
+	// 		if session.Dungeon.Sequence[i] == RoomSlice[j] {
+	// 			dungeon.sequence[i] = roomSlice[j]
+	// 			break
+	// 		}
+	// 	}
+	// }
 
 	for i := range session.Dungeon.Corridors {
 		recoverCorridor(&dungeon.corridors[i], &session.Dungeon.Corridors[i])

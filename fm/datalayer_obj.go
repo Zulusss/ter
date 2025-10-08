@@ -77,7 +77,7 @@ type Dungeon_t struct {
 	Room_cnt      int
 	Corridors_cnt int
 	Rooms         [ROOMS_PER_SIDE + 2][ROOMS_PER_SIDE + 2]Room_t
-	Sequence      [MAX_ROOMS_NUMBER]*Room_t
+	Sequence      [MAX_ROOMS_NUMBER]Room_t
 	Corridors     [MAX_CORRIDORS_NUMBER]Corridor_t
 	Level         int
 	LockedDoors   [3]Position_t
