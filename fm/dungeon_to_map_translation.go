@@ -64,9 +64,6 @@ func rooms_to_map(dungeon *dungeon_t, field *map_t) {
 			}
 
 			field.playground[cur_entity.pos.y][cur_entity.pos.x] = int(cur_entity.symbol)
-			// if field.enemies_cnt == 44 || field.items_cnt == 26 {
-			// 	break
-			// }
 		}
 	}
 }

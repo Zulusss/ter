@@ -108,3 +108,20 @@ type Session struct {
 	Player    *Player_t
 	Timestamp int64
 }
+
+type SavedGames struct {
+	Gold            int
+	Level           int
+	Turns           int
+	MonsterKill     int
+	FoodConsumed    int
+	ScrollsRead     int
+	PotionsConsumed int
+	StrikesToEnemy  int
+	StrikesToPlayer int
+}
+
+type AttemptsData struct {
+	Attempts []SavedGames
+	NextID   int
+}

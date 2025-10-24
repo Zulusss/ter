@@ -63,13 +63,10 @@ func generate_sectors(dungeon *dungeon_t) {
 		}
 	}
 	slcNoNil := slc[:count]
-	// slices.SortFunc(slc, func(i, j int) int /*room_placement_comparator*/ {
-	// 	return slc[i].sector - slc[j].sector
-	// })
 	sort.Slice(slcNoNil, func(i, j int) bool /*room_placement_comparator*/ {
 		return slcNoNil[i].sector < slcNoNil[j].sector
 	})
-	// qsort(dungeon.sequence, (size_t)dungeon.room_cnt, sizeof(room_t *), room_placement_comparator);
+
 	for i := range slc {
 		if slc[i] != nil {
 			dungeon.sequence[i] = slcNoNil[i]
@@ -236,21 +233,21 @@ func generate_corners(room *room_t, offset_y int, offset_x int) {
 func generate_doors(room *room_t) {
 	if room.connections[TOP] != nil {
 		room.doors[TOP].y = room.top_left.y
-		room.doors[TOP].x = rand.Int()%(int)(room.bot_right.x-room.top_left.x-1) + room.top_left.x + 1 // PupiPooo <----
+		room.doors[TOP].x = rand.Int()%(int)(room.bot_right.x-room.top_left.x-1) + room.top_left.x + 1
 	}
 
 	if room.connections[RIGHT] != nil {
-		room.doors[RIGHT].y = rand.Int()%(int)(room.bot_right.y-room.top_left.y-1) + room.top_left.y + 1 // PupiPAAA
+		room.doors[RIGHT].y = rand.Int()%(int)(room.bot_right.y-room.top_left.y-1) + room.top_left.y + 1
 		room.doors[RIGHT].x = room.bot_right.x
 	}
 
 	if room.connections[BOTTOM] != nil {
 		room.doors[BOTTOM].y = room.bot_right.y
-		room.doors[BOTTOM].x = rand.Int()%(int)(room.bot_right.x-room.top_left.x-1) + room.top_left.x + 1 // PUPI PIII
+		room.doors[BOTTOM].x = rand.Int()%(int)(room.bot_right.x-room.top_left.x-1) + room.top_left.x + 1
 	}
 
 	if room.connections[LEFT] != nil {
-		room.doors[LEFT].y = rand.Int()%(int)(room.bot_right.y-room.top_left.y-1) + room.top_left.y + 1 // RAAAAAAAARH
+		room.doors[LEFT].y = rand.Int()%(int)(room.bot_right.y-room.top_left.y-1) + room.top_left.y + 1
 		room.doors[LEFT].x = room.top_left.x
 	}
 }
@@ -375,11 +372,9 @@ func generateLockedRooms(dungeon *dungeon_t) {
 				continue
 			}
 			var count int
-			// var tmpRoom *room_t
 			for k := range dungeon.sequence[i].connections {
 
 				if dungeon.sequence[i].connections[k] != nil {
-					// tmpRoom = dungeon.sequence[i].connections[k]
 					count++
 				}
 			}

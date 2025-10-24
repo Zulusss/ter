@@ -2,15 +2,7 @@ package main
 
 import "math/rand"
 
-// import "strings"
-
-// var enemy_pool[ENEMY_POOL_LEN] byte
-// strings
-// var str string
 const str_enemy = "zOsmvg"
-
-// enemy_pool := []byte(str)
-// item_pool[ITEM_POOL_LEN] = "/?*$!";
 const str_item = "/?*$"
 
 func check_unoccupied(room *room_t, pos *position_t) int {
@@ -35,21 +27,17 @@ func generate_entity_coords(room *room_t, pos *position_t) {
 	pos.y = (rand.Int()%(bot_y-top_y-1) + 1) + top_y
 
 	for check_unoccupied(room, pos) == OCCUPIED {
-		// if check_unoccupied(room, pos) == OCCUPIED {
-		// 	break
-		// }
 		pos.x = (rand.Int()%(bot_x-top_x-1) + 1) + top_x
 		pos.y = (rand.Int()%(bot_y-top_y-1) + 1) + top_y
 	}
-	// while (check_unoccupied(room, pos) == OCCUPIED);
 }
 
-func generate_entities(dungeon *dungeon_t) {
+func generate_entities(dungeon *dungeon_t, difficulty int) {
 	generate_player_pos(dungeon)
 	generateLockedRooms(dungeon)
 	generate_exit(dungeon)
-	generate_enemies(dungeon)
-	generate_items(dungeon)
+	generate_enemies(dungeon, difficulty)
+	generate_items(dungeon, difficulty)
 	generateKeys(dungeon)
 }
 
@@ -93,7 +81,7 @@ func generate_exit(dungeon *dungeon_t) {
 	dungeon.sequence[room_index].entities_cnt++
 }
 
-func generate_enemies(dungeon *dungeon_t) {
+func generate_enemies(dungeon *dungeon_t, difficulty int) {
 	for i := 0; i < dungeon.room_cnt; i++ {
 		enemies_cnt := rand.Int() % MAX_ENEMIES_PER_ROOM
 		tryCount := dungeon.level
@@ -104,6 +92,7 @@ func generate_enemies(dungeon *dungeon_t) {
 			}
 			tryCount--
 		}
+		enemies_cnt += difficulty
 
 		for j := 0; j < enemies_cnt; j++ {
 			var enemy entity_t
@@ -154,7 +143,7 @@ func generateEnemyType(dungeon *dungeon_t, enemy *entity_t) {
 		enemy.stats.strength = 1 + 1*dungeon.level
 		enemy.stats.agility = 3 + 3*dungeon.level
 		enemy.stats.hp = 3 + 3*dungeon.level
-		enemy.stats.aggression = 2
+		enemy.stats.aggression = 3
 		enemy.stats.extraSym = int(str_item[rand.Int()%ITEM_POOL_LEN])
 	case 'g':
 		enemy.stats.strength = 1 + 1*dungeon.level
@@ -222,9 +211,19 @@ func generateNewKey(room *room_t, item *entity_t) {
 
 }
 
-func generate_items(dungeon *dungeon_t) {
+func generate_items(dungeon *dungeon_t, difficulty int) {
 	for i := 0; i < dungeon.room_cnt; i++ {
 		items_cnt := rand.Int() % MAX_ITEMS_PER_ROOM
+
+		tryCount := dungeon.level
+		for tryCount > 0 {
+			if rand.Int()%10 == 0 {
+				items_cnt--
+				break
+			}
+			tryCount--
+		}
+		items_cnt -= difficulty
 
 		for j := 0; j < items_cnt; j++ {
 			var item entity_t

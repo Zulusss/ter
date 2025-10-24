@@ -8,6 +8,9 @@ const NOT_CONNECTED = 1
 const MAP_HEIGHT = 30
 const MAP_WIDTH = 90
 
+const SCRN_W = 450
+const SCRN_H = 120
+
 const ROOMS_PER_SIDE = 3
 
 const MAX_ROOMS_NUMBER = ROOMS_PER_SIDE * ROOMS_PER_SIDE
@@ -60,3 +63,10 @@ const EMPTY_CHAR = ' '
 const IS_OUTER = 0
 const IS_INNER = 1
 const IS_WALL = 2
+
+const ESC = 27
+const MOVEMENT_STEP = 1
+const SPACE_CHAR = /*0xA0*/ ' '
+const MINIMAP_WALL_CHAR = 0x2588
+const MINIMAP_CORRIDOR_CHAR = /*0x2591*/ '©'
+const MINIMAP_PLAYER_CHAR = /*0xA9*/ '@'

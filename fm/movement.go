@@ -4,15 +4,13 @@ import (
 	"container/list"
 	"fmt"
 	"math/rand"
-
-	"github.com/gbin/goncurses"
+	// "github.com/gbin/goncurses"
 )
 
 func init_player(player *player_t, spawn_point *entity_t) {
 	var position position_t
 	position.x, position.y = spawn_point.pos.x, spawn_point.pos.y
 	player.pos = position
-	// spawn_point.pos = player.pos
 }
 
 func initInventory(player *player_t) {
@@ -21,36 +19,55 @@ func initInventory(player *player_t) {
 	player.inventory.food = make([]int, 0, 9)
 	player.inventory.potion = make([]int, 0, 9)
 	player.strength = rand.Int()%3 + 1
-	player.agility = rand.Int()%4 + 2
-	player.health = rand.Int()%10 + 3
+	player.agility = rand.Int()%4 + 2 + 2
+	player.health = rand.Int()%10 + 3 + 7
 	player.maxHealth = player.health
+	var difficulty difficulty_t
+	difficulty.hp = player.health
+	player.diff = &difficulty
 }
 
 func useFood(player *player_t) {
-	goncurses.StdScr().Clear()
-	goncurses.StdScr().MovePrint(0, 0, "Which food do you want to consume? Enter number 1-9:\n")
+	var fList list.List
+	fList.Init()
+
 	for i := range player.inventory.food {
-		if player.inventory.food[i] == 10 {
-			goncurses.StdScr().MovePrintf(i+1, 0, "%d. Apple", i+1)
-		} else if player.inventory.food[i] == 11 {
-			goncurses.StdScr().MovePrintf(i+1, 0, "%d. Banana", i+1)
-		} else if player.inventory.food[i] == 12 {
-			goncurses.StdScr().MovePrintf(i+1, 0, "%d. Cucumber", i+1)
+		switch player.inventory.food[i] {
+		case 10:
+			str := fmt.Sprintf("%d. Apple", i+1)
+			fList.PushBack(str)
+		case 11:
+			str := fmt.Sprintf("%d. Banana", i+1)
+			fList.PushBack(str)
+		case 12:
+			str := fmt.Sprintf("%d. Cucumber", i+1)
+			fList.PushBack(str)
 		}
 	}
-	key := goncurses.StdScr().GetChar()
+	printFood(&fList)
+	key := getInput()
 	num := int(key - 48)
 	if num > 0 && num <= len(player.inventory.food) {
-		if player.inventory.food[num-1] == 10 {
+		switch player.inventory.food[num-1] {
+		case 10:
 			player.health += 5
+			if player.health > player.maxHealth {
+				player.health = player.maxHealth
+			}
 			player.foodConsumed++
 			player.inventory.food = append(player.inventory.food[:num-1], player.inventory.food[num:]...)
-		} else if player.inventory.food[num-1] == 11 {
+		case 11:
 			player.health += 10
+			if player.health > player.maxHealth {
+				player.health = player.maxHealth
+			}
 			player.foodConsumed++
 			player.inventory.food = append(player.inventory.food[:num-1], player.inventory.food[num:]...)
-		} else if player.inventory.food[num-1] == 12 {
+		case 12:
 			player.health += 15
+			if player.health > player.maxHealth {
+				player.health = player.maxHealth
+			}
 			player.foodConsumed++
 			player.inventory.food = append(player.inventory.food[:num-1], player.inventory.food[num:]...)
 		}
@@ -58,30 +75,37 @@ func useFood(player *player_t) {
 }
 
 func useScroll(player *player_t) {
-	goncurses.StdScr().Clear()
-	goncurses.StdScr().MovePrint(0, 0, "Which scroll do you want to use? Enter number 1-9:\n")
+	var sList list.List
+	sList.Init()
 	for i := range player.inventory.scroll {
-		if player.inventory.scroll[i] == 20 {
-			goncurses.StdScr().MovePrintf(i+1, 0, "%d. Scroll of Strength", i+1)
-		} else if player.inventory.scroll[i] == 21 {
-			goncurses.StdScr().MovePrintf(i+1, 0, "%d. Scroll of Agility", i+1)
-		} else if player.inventory.scroll[i] == 22 {
-			goncurses.StdScr().MovePrintf(i+1, 0, "%d. Scroll of Max Health", i+1)
+		switch player.inventory.scroll[i] {
+		case 20:
+			str := fmt.Sprintf("%d. Scroll of Strength", i+1)
+			sList.PushBack(str)
+		case 21:
+			str := fmt.Sprintf("%d. Scroll of Agility", i+1)
+			sList.PushBack(str)
+		case 22:
+			str := fmt.Sprintf("%d. Scroll of Max Health", i+1)
+			sList.PushBack(str)
 		}
 	}
-	key := goncurses.StdScr().GetChar()
+	printScrolls(&sList)
+	key := getInput()
 	num := int(key - 48)
 	if num > 0 && num <= len(player.inventory.scroll) {
-		if player.inventory.scroll[num-1] == 20 {
+		switch player.inventory.scroll[num-1] {
+		case 20:
 			player.strength += 5
 			player.scrollsRead++
 			player.inventory.scroll = append(player.inventory.scroll[:num-1], player.inventory.scroll[num:]...)
-		} else if player.inventory.scroll[num-1] == 21 {
+		case 21:
 			player.agility += 5
 			player.scrollsRead++
 			player.inventory.scroll = append(player.inventory.scroll[:num-1], player.inventory.scroll[num:]...)
-		} else if player.inventory.scroll[num-1] == 22 {
+		case 22:
 			player.maxHealth += 5
+			player.health += 5
 			player.scrollsRead++
 			player.inventory.scroll = append(player.inventory.scroll[:num-1], player.inventory.scroll[num:]...)
 		}
@@ -89,35 +113,41 @@ func useScroll(player *player_t) {
 }
 
 func usePotion(player *player_t) {
-	goncurses.StdScr().Clear()
-	goncurses.StdScr().MovePrint(0, 0, "Which potion do you want to drink? Enter number 1-9:\n")
+	var pList list.List
+	pList.Init()
 	for i := range player.inventory.potion {
-		if player.inventory.potion[i] == 40 {
-			goncurses.StdScr().MovePrintf(i+1, 0, "%d. Potion of Strength", i+1)
-		} else if player.inventory.potion[i] == 41 {
-			goncurses.StdScr().MovePrintf(i+1, 0, "%d. Potion of Agility", i+1)
-		} else if player.inventory.potion[i] == 42 {
-			goncurses.StdScr().MovePrintf(i+1, 0, "%d. Potion of Max Health", i+1)
+		switch player.inventory.potion[i] {
+		case 40:
+			str := fmt.Sprintf("%d. Potion of Strength", i+1)
+			pList.PushBack(str)
+		case 41:
+			str := fmt.Sprintf("%d. Potion of Agility", i+1)
+			pList.PushBack(str)
+		case 42:
+			str := fmt.Sprintf("%d. Potion of Max Health", i+1)
+			pList.PushBack(str)
 		}
 	}
-	key := goncurses.StdScr().GetChar()
+	printPotions(&pList)
+	key := getInput()
 	num := int(key - 48)
 	if num > 0 && num <= len(player.inventory.potion) {
-		if player.inventory.potion[num-1] == 40 {
+		switch player.inventory.potion[num-1] {
+		case 40:
 			if player.potStrenght == 0 {
 				player.strength += 5
 				player.potionsConsumed++
 			}
 			player.potStrenght = 10
 			player.inventory.potion = append(player.inventory.potion[:num-1], player.inventory.potion[num:]...)
-		} else if player.inventory.potion[num-1] == 41 {
+		case 41:
 			if player.potAgility == 0 {
 				player.agility += 5
 				player.potionsConsumed++
 			}
 			player.potAgility = 10
 			player.inventory.potion = append(player.inventory.potion[:num-1], player.inventory.potion[num:]...)
-		} else if player.inventory.potion[num-1] == 42 {
+		case 42:
 			if player.potMaxHealth == 0 {
 				player.maxHealth += 5
 				player.potionsConsumed++
@@ -144,24 +174,32 @@ func checkPotion(player *player_t) {
 	if player.potMaxHealth > 0 {
 		if player.potMaxHealth == 1 {
 			player.maxHealth -= 5
+			if player.health < 1 {
+				player.health = 1
+			}
 		}
 		player.potMaxHealth--
 	}
 }
 
 func useWeapon(player *player_t, field *map_t) {
-	goncurses.StdScr().Clear()
-	goncurses.StdScr().MovePrint(0, 0, "Which weapon do you want to use? 0 - bare hands. Enter number 0-9:\n")
+	var wList list.List
+	wList.Init()
 	for i := range player.inventory.weapon {
-		if player.inventory.weapon[i] == 30 {
-			goncurses.StdScr().MovePrintf(i+1, 0, "%d. Sword", i+1)
-		} else if player.inventory.weapon[i] == 31 {
-			goncurses.StdScr().MovePrintf(i+1, 0, "%d. Axe", i+1)
-		} else if player.inventory.weapon[i] == 32 {
-			goncurses.StdScr().MovePrintf(i+1, 0, "%d. Hammer", i+1)
+		switch player.inventory.weapon[i] {
+		case 30:
+			str := fmt.Sprintf("%d. Sword", i+1)
+			wList.PushBack(str)
+		case 31:
+			str := fmt.Sprintf("%d. Axe", i+1)
+			wList.PushBack(str)
+		case 32:
+			str := fmt.Sprintf("%d. Hammer", i+1)
+			wList.PushBack(str)
 		}
 	}
-	key := goncurses.StdScr().GetChar()
+	key := printWeapon(&wList)
+
 	num := int(key - 48)
 	if num >= 0 && num <= len(player.inventory.weapon) {
 		if num == 0 {
@@ -196,7 +234,6 @@ func useWeapon(player *player_t, field *map_t) {
 				field.items[field.items_cnt] = oldWeapon
 			}
 			player.weapon = 30
-			// player.inventory.weapon = append(player.inventory.weapon[:num-1], player.inventory.weapon[num:]...)
 		} else if player.inventory.weapon[num-1] == 31 {
 			if player.weapon != 0 {
 				var oldWeapon entity_t
@@ -227,7 +264,6 @@ func useWeapon(player *player_t, field *map_t) {
 				field.items[field.items_cnt] = oldWeapon
 			}
 			player.weapon = 31
-			// player.inventory.weapon = append(player.inventory.weapon[:num-1], player.inventory.weapon[num:]...)
 		} else if player.inventory.weapon[num-1] == 32 {
 			if player.weapon != 0 {
 				var oldWeapon entity_t
@@ -259,7 +295,6 @@ func useWeapon(player *player_t, field *map_t) {
 			}
 
 			player.weapon = 32
-			// player.inventory.weapon = append(player.inventory.weapon[:num-1], player.inventory.weapon[num:]...)
 		}
 	}
 }
@@ -268,23 +303,19 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 	if !player.isSleeped {
 		var redraw bool
 		redrawItems(field)
-		if key == 'w' || key == goncurses.KEY_UP {
+		if key == 'w' || key == 259 { //goncurses.KEY_UP
 			player.pos.y -= MOVEMENT_STEP
 			checkTile(dungeon, field, player, msgStr)
 
-			if field.playground[player.pos.y][player.pos.x] == 'z' ||
-				field.playground[player.pos.y][player.pos.x] == 'v' ||
-				field.playground[player.pos.y][player.pos.x] == 'm' ||
-				field.playground[player.pos.y][player.pos.x] == 'O' ||
-				field.playground[player.pos.y][player.pos.x] == 'g' ||
-				field.playground[player.pos.y][player.pos.x] == 's' {
+			switch field.playground[player.pos.y][player.pos.x] {
+			case 'z', 'v', 'm', 'O', 'g', 's':
 				var pos position_t
 				pos.y, pos.x = player.pos.y, player.pos.x
 				player.pos.y += MOVEMENT_STEP
 				redraw = true
 				enemy := findEnemy(dungeon, &pos)
 				if enemy != nil {
-					playerAttack(enemy, player)
+					playerAttack(enemy, player, msgStr)
 					if enemy.stats.hp < 1 {
 						player.monsterKill++
 						field.playground[enemy.pos.y][enemy.pos.x] = ' '
@@ -294,55 +325,37 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 						player.maxHealth += enemy.stats.hpStealed
 						msg := fmt.Sprintf("You kill %c, you got %d gold.", enemy.symbol, monsterGold)
 						msgStr.PushFront(msg)
-						if msgStr.Len() > 2 {
-							msgStr.Remove(msgStr.Back())
-						}
 					}
 				}
-			} else if field.playground[player.pos.y][player.pos.x] == WALL_CHAR ||
-				field.playground[player.pos.y][player.pos.x] == OUTER_AREA_CHAR {
-				// player->pos.x -= sinf(player->view_angle) * MOVEMENT_STEP;
+			case WALL_CHAR, OUTER_AREA_CHAR:
 				redraw = true
 				player.pos.y += MOVEMENT_STEP
-			} else if field.playground[player.pos.y][player.pos.x] == 'x' {
+			case 'x':
 				var msg string
 				msg, redraw = checkDoor(dungeon, player)
 				msgStr.PushFront(msg)
-				if msgStr.Len() > 2 {
-					msgStr.Remove(msgStr.Back())
-				}
 				if redraw {
 					player.pos.y += MOVEMENT_STEP
 				}
 			}
 			if !redraw {
 				player.turns++
-				// ch := field.playground[player.pos.y+MOVEMENT_STEP][player.pos.x]
-				// if ch == '$' || ch == '*' || ch == '?' || ch == '/' || ch == '^' {
-				// 	field.playground[player.pos.y][player.pos.x] = '@'
-				// } else {
 				field.playground[player.pos.y+MOVEMENT_STEP][player.pos.x] = ' '
 				field.playground[player.pos.y][player.pos.x] = '@'
-				// }
 			}
-		} else if key == 's' || key == goncurses.KEY_DOWN {
-			// player->pos.x -= sinf(player->view_angle) * MOVEMENT_STEP;
+		} else if key == 's' || key == 258 { //goncurses.KEY_DOWN
 			player.pos.y += MOVEMENT_STEP
 			checkTile(dungeon, field, player, msgStr)
 
-			if field.playground[player.pos.y][player.pos.x] == 'z' ||
-				field.playground[player.pos.y][player.pos.x] == 'v' ||
-				field.playground[player.pos.y][player.pos.x] == 'm' ||
-				field.playground[player.pos.y][player.pos.x] == 'O' ||
-				field.playground[player.pos.y][player.pos.x] == 'g' ||
-				field.playground[player.pos.y][player.pos.x] == 's' {
+			switch field.playground[player.pos.y][player.pos.x] {
+			case 'z', 'v', 'm', 'O', 'g', 's':
 				var pos position_t
 				pos.y, pos.x = player.pos.y, player.pos.x
 				player.pos.y -= MOVEMENT_STEP
 				redraw = true
 				enemy := findEnemy(dungeon, &pos)
 				if enemy != nil {
-					playerAttack(enemy, player)
+					playerAttack(enemy, player, msgStr)
 					if enemy.stats.hp < 1 {
 						player.monsterKill++
 						field.playground[enemy.pos.y][enemy.pos.x] = ' '
@@ -352,54 +365,37 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 						player.maxHealth += enemy.stats.hpStealed
 						msg := fmt.Sprintf("You kill %c, you got %d gold", enemy.symbol, monsterGold)
 						msgStr.PushFront(msg)
-						if msgStr.Len() > 2 {
-							msgStr.Remove(msgStr.Back())
-						}
 					}
 				}
-			} else if field.playground[player.pos.y][player.pos.x] == WALL_CHAR ||
-				field.playground[player.pos.y][player.pos.x] == OUTER_AREA_CHAR {
-				// player->pos.x += sinf(player->view_angle) * MOVEMENT_STEP;
+			case WALL_CHAR, OUTER_AREA_CHAR:
 				redraw = true
 				player.pos.y -= MOVEMENT_STEP
-			} else if field.playground[player.pos.y][player.pos.x] == 'x' {
+			case 'x':
 				var msg string
 				msg, redraw = checkDoor(dungeon, player)
 				msgStr.PushFront(msg)
-				if msgStr.Len() > 2 {
-					msgStr.Remove(msgStr.Back())
-				}
 				if redraw {
 					player.pos.y -= MOVEMENT_STEP
 				}
 			}
 			if !redraw {
 				player.turns++
-				// ch := field.playground[player.pos.y-MOVEMENT_STEP][player.pos.x]
-				// if ch == '$' || ch == '*' || ch == '?' || ch == '/' || ch == '^' {
-				// 	field.playground[player.pos.y][player.pos.x] = '@'
-				// } else {
 				field.playground[player.pos.y-MOVEMENT_STEP][player.pos.x] = ' '
 				field.playground[player.pos.y][player.pos.x] = '@'
-				// }
 			}
-		} else if key == 'a' || key == goncurses.KEY_LEFT {
+		} else if key == 'a' || key == 260 { //goncurses.KEY_LEFT
 			player.pos.x -= MOVEMENT_STEP
 			checkTile(dungeon, field, player, msgStr)
 
-			if field.playground[player.pos.y][player.pos.x] == 'z' ||
-				field.playground[player.pos.y][player.pos.x] == 'v' ||
-				field.playground[player.pos.y][player.pos.x] == 'm' ||
-				field.playground[player.pos.y][player.pos.x] == 'O' ||
-				field.playground[player.pos.y][player.pos.x] == 'g' ||
-				field.playground[player.pos.y][player.pos.x] == 's' {
+			switch field.playground[player.pos.y][player.pos.x] {
+			case 'z', 'v', 'm', 'O', 'g', 's':
 				var pos position_t
 				pos.y, pos.x = player.pos.y, player.pos.x
 				player.pos.x += MOVEMENT_STEP
 				redraw = true
 				enemy := findEnemy(dungeon, &pos)
 				if enemy != nil {
-					playerAttack(enemy, player)
+					playerAttack(enemy, player, msgStr)
 					if enemy.stats.hp < 1 {
 						player.monsterKill++
 						field.playground[enemy.pos.y][enemy.pos.x] = ' '
@@ -409,52 +405,36 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 						player.maxHealth += enemy.stats.hpStealed
 						msg := fmt.Sprintf("You kill %c, you got %d gold", enemy.symbol, monsterGold)
 						msgStr.PushFront(msg)
-						if msgStr.Len() > 2 {
-							msgStr.Remove(msgStr.Back())
-						}
 					}
 				}
-			} else if field.playground[player.pos.y][player.pos.x] == WALL_CHAR ||
-				field.playground[player.pos.y][player.pos.x] == OUTER_AREA_CHAR {
+			case WALL_CHAR, OUTER_AREA_CHAR:
 				redraw = true
 				player.pos.x += MOVEMENT_STEP
-			} else if field.playground[player.pos.y][player.pos.x] == 'x' {
+			case 'x':
 				var msg string
 				msg, redraw = checkDoor(dungeon, player)
 				msgStr.PushFront(msg)
-				if msgStr.Len() > 2 {
-					msgStr.Remove(msgStr.Back())
-				}
 				if redraw {
 					player.pos.x += MOVEMENT_STEP
 				}
 			}
 			if !redraw {
 				player.turns++
-				// ch := field.playground[player.pos.y][player.pos.x+MOVEMENT_STEP]
-				// if ch == '$' || ch == '*' || ch == '?' || ch == '/' || ch == '^' {
-				// 	field.playground[player.pos.y][player.pos.x] = '@'
-				// } else {
 				field.playground[player.pos.y][player.pos.x+MOVEMENT_STEP] = ' '
 				field.playground[player.pos.y][player.pos.x] = '@'
-				// }
 			}
-		} else if key == 'd' || key == goncurses.KEY_RIGHT {
+		} else if key == 'd' || key == 261 { //goncurses.KEY_RIGHT
 			player.pos.x += MOVEMENT_STEP
 			checkTile(dungeon, field, player, msgStr)
-			if field.playground[player.pos.y][player.pos.x] == 'z' ||
-				field.playground[player.pos.y][player.pos.x] == 'v' ||
-				field.playground[player.pos.y][player.pos.x] == 'm' ||
-				field.playground[player.pos.y][player.pos.x] == 'O' ||
-				field.playground[player.pos.y][player.pos.x] == 'g' ||
-				field.playground[player.pos.y][player.pos.x] == 's' {
+			switch field.playground[player.pos.y][player.pos.x] {
+			case 'z', 'v', 'm', 'O', 'g', 's':
 				var pos position_t
 				pos.y, pos.x = player.pos.y, player.pos.x
 				player.pos.x -= MOVEMENT_STEP
 				redraw = true
 				enemy := findEnemy(dungeon, &pos)
 				if enemy != nil {
-					playerAttack(enemy, player)
+					playerAttack(enemy, player, msgStr)
 					if enemy.stats.hp < 1 {
 						player.monsterKill++
 						field.playground[enemy.pos.y][enemy.pos.x] = ' '
@@ -464,35 +444,23 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 						player.maxHealth += enemy.stats.hpStealed
 						msg := fmt.Sprintf("You kill %c, you got %d gold", enemy.symbol, monsterGold)
 						msgStr.PushFront(msg)
-						if msgStr.Len() > 2 {
-							msgStr.Remove(msgStr.Back())
-						}
 					}
 				}
-			} else if field.playground[player.pos.y][player.pos.x] == WALL_CHAR ||
-				field.playground[player.pos.y][player.pos.x] == OUTER_AREA_CHAR {
+			case WALL_CHAR, OUTER_AREA_CHAR:
 				redraw = true
 				player.pos.x -= MOVEMENT_STEP
-			} else if field.playground[player.pos.y][player.pos.x] == 'x' {
+			case 'x':
 				var msg string
 				msg, redraw = checkDoor(dungeon, player)
 				msgStr.PushFront(msg)
-				if msgStr.Len() > 2 {
-					msgStr.Remove(msgStr.Back())
-				}
 				if redraw {
 					player.pos.x -= MOVEMENT_STEP
 				}
 			}
 			if !redraw {
 				player.turns++
-				// ch := field.playground[player.pos.y][player.pos.x-MOVEMENT_STEP]
-				// if ch == '$' || ch == '*' || ch == '?' || ch == '/' || ch == '^' {
-				// 	field.playground[player.pos.y][player.pos.x] = '@'
-				// } else {
 				field.playground[player.pos.y][player.pos.x-MOVEMENT_STEP] = ' '
 				field.playground[player.pos.y][player.pos.x] = '@'
-				// }
 			}
 		} else if key == 'j' {
 			useFood(player)
@@ -503,21 +471,20 @@ func player_movement(dungeon *dungeon_t, field *map_t, player *player_t, key int
 		} else if key == 'h' {
 			useWeapon(player, field)
 		}
-
-		// redrawItems(field)
-		// if player.turns > 0 {
-		// 	field.playground[field.player_spawn.pos.y][field.player_spawn.pos.x] = ' '
-		// 	// field.player_spawn.pos.y
-		// }
-		// if field.playground[player.pos.y][player.pos.x] == EXIT_CHAR {
-		// 	// generate_dungeon(dungeon)
-		// }
 	} else {
 		player.isSleeped = false
 	}
 	if msgStr.Len() > 2 {
 		msgStr.Remove(msgStr.Back())
 	}
+}
+
+func IsDead(player *player_t) bool {
+	return player.health <= 0
+}
+
+func TheEnd(dungeon *dungeon_t, player *player_t) {
+	recordAttempt(dungeon, player)
 }
 
 func redrawItems(field *map_t) {
@@ -527,24 +494,45 @@ func redrawItems(field *map_t) {
 		}
 	}
 }
-func playerAttack(enemy *entity_t, player *player_t) {
+func playerAttack(enemy *entity_t, player *player_t, msgStr *list.List) {
+	var attack int
+	switch player.weapon {
+	case 30:
+		attack = player.strength + player.strength/10 + 1
+	case 31:
+		attack = player.strength + player.strength/10*2 + 2
+	case 32:
+		attack = player.strength + player.strength/10*3 + 3
+	default:
+		attack = player.strength
+	}
 	switch enemy.symbol {
 	case 'v':
 		if !enemy.stats.isFirst {
 			enemy.stats.isFirst = true
+			msgStr.PushFront("Vampire dodge the attack.")
 		} else {
 			dodge := enemy.stats.agility - player.agility - rand.Int()%player.agility
+
 			if dodge < 1 {
-				enemy.stats.hp -= player.strength
+				enemy.stats.hp -= attack
 				player.strikesToEnemy++
+				msg := fmt.Sprintf("You hit vampire by %d.", attack)
+				msgStr.PushFront(msg)
+			} else {
+				msgStr.PushFront("Vampire dodge the attack.")
 			}
 		}
 
 	default:
 		dodge := enemy.stats.agility - player.agility - rand.Int()%player.agility
 		if dodge < 1 {
-			enemy.stats.hp -= player.strength
+			enemy.stats.hp -= attack
 			player.strikesToEnemy++
+			msg := fmt.Sprintf("You hit enemy by %d.", attack)
+			msgStr.PushFront(msg)
+		} else {
+			msgStr.PushFront("Enemy dodge the attack.")
 		}
 	}
 }
@@ -557,8 +545,6 @@ func findEnemy(dungeon *dungeon_t, pos *position_t) (ptrEnemy *entity_t) {
 			if dungeon.sequence[i].entities[j].typeE == ENEMY {
 				if dungeon.sequence[i].entities[j].pos.y == pos.y &&
 					dungeon.sequence[i].entities[j].pos.x == pos.x {
-					// break
-					// enemy := dungeon.sequence[i].entities[j]
 					return &dungeon.sequence[i].entities[j]
 				}
 			}
@@ -594,10 +580,5 @@ func checkDoor(dungeon *dungeon_t, player *player_t) (string, bool) {
 			return msg, true
 		}
 	}
-	return "fuck", false
+	return "fake", false
 }
-
-// func firstMove(dungeon *dungeon_t, field *map_t, player *player_t) {
-// 	key := int(goncurses.StdScr().GetChar())
-// 	player_movement(dungeon, field, player, key)
-// }

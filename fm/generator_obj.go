@@ -75,3 +75,38 @@ type stats_t struct {
 	hpStealed  int
 	extraSym   int
 }
+
+type difficulty_t struct {
+	difficulty int
+	hp         int
+}
+
+type screen_t struct {
+	screen [SCRN_H][SCRN_W]int
+}
+
+type player_t struct {
+	pos             position_t
+	inventory       inventory_t
+	turns           int
+	weapon          int
+	health          int
+	strength        int
+	agility         int
+	maxHealth       int
+	potStrenght     int
+	potAgility      int
+	potMaxHealth    int
+	gold            int
+	isSleeped       bool
+	gotBlue         bool
+	gotMagenta      bool
+	gotCyan         bool
+	monsterKill     int
+	foodConsumed    int
+	potionsConsumed int
+	scrollsRead     int
+	strikesToEnemy  int
+	strikesToPlayer int
+	diff            *difficulty_t
+}

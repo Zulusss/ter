@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	// "sort"
+	"sort"
 	"time"
 )
 
@@ -70,6 +70,75 @@ func (s *Store) LoadSession() (*Session, error) {
 	return &session, nil
 }
 
+func (s *Store) SaveGameAttempt(attempt SavedGames) error {
+	attemptsData, err := s.loadAttempts()
+	if err != nil {
+		return fmt.Errorf("failed to load existing attempts: %w", err)
+	}
+
+	attemptsData.Attempts = append(attemptsData.Attempts, attempt)
+	attemptsData.NextID++
+
+	sort.Slice(attemptsData.Attempts, func(i, j int) bool {
+		return attemptsData.Attempts[i].Gold > attemptsData.Attempts[j].Gold
+	})
+
+	return s.saveAttempts(attemptsData)
+}
+
+func (s *Store) loadAttempts() (*AttemptsData, error) {
+	filePath := filepath.Join(s.saveDir, AttemptsFile)
+
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return &AttemptsData{
+				Attempts: make([]SavedGames, 0),
+				NextID:   1,
+			}, nil
+		}
+		return nil, fmt.Errorf("failed to read attempts file: %w", err)
+	}
+
+	var attemptsData AttemptsData
+	if err := json.Unmarshal(data, &attemptsData); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal attempts: %w", err)
+	}
+
+	return &attemptsData, nil
+}
+
+func (s *Store) saveAttempts(attemptsData *AttemptsData) error {
+	data, err := json.MarshalIndent(attemptsData, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal attempts: %w", err)
+	}
+
+	filePath := filepath.Join(s.saveDir, AttemptsFile)
+	if err := os.WriteFile(filePath, data, 0644); err != nil {
+		return fmt.Errorf("failed to write attempts file: %w", err)
+	}
+
+	return nil
+}
+
+func recordAttempt(dungeon *dungeon_t, player *player_t) {
+	var AttemptToSave SavedGames
+	AttemptToSave.FoodConsumed = player.foodConsumed
+	AttemptToSave.Gold = player.gold
+	AttemptToSave.Level = dungeon.level
+	AttemptToSave.MonsterKill = player.monsterKill
+	AttemptToSave.PotionsConsumed = player.potionsConsumed
+	AttemptToSave.ScrollsRead = player.scrollsRead
+	AttemptToSave.StrikesToEnemy = player.strikesToEnemy
+	AttemptToSave.StrikesToPlayer = player.strikesToPlayer
+	AttemptToSave.Turns = player.turns
+
+	if store, err := NewStore(); err == nil {
+		store.SaveGameAttempt(AttemptToSave)
+	}
+}
+
 func saveSessionFromGame(dungeon *dungeon_t, field *map_t, player *player_t) *Session {
 	var SessionToSave Session
 	var Dungeon Dungeon_t
@@ -81,39 +150,16 @@ func saveSessionFromGame(dungeon *dungeon_t, field *map_t, player *player_t) *Se
 	SessionToSave.Dungeon.Room_cnt = dungeon.room_cnt
 	SessionToSave.Dungeon.Corridors_cnt = dungeon.corridors_cnt
 	SessionToSave.Dungeon.Level = dungeon.level
-	// roomSlice := make([]*room_t, 0)
-	// RoomSlice := make([]*Room_t, 0)
+
 	var cnt int
 	for i := 1; i < 4; i++ {
 		for j := 1; j < 4; j++ {
 			convertRoom(&dungeon.rooms[i][j], &SessionToSave.Dungeon.Rooms[i][j])
-			var Room Room_t
-			Room = SessionToSave.Dungeon.Rooms[i][j]
+			Room := SessionToSave.Dungeon.Rooms[i][j]
 			SessionToSave.Dungeon.Sequence[cnt] = Room
 			cnt++
-			// roomSlice = append(roomSlice, &dungeon.rooms[i][j])
-			// RoomSlice = append(RoomSlice, &SessionToSave.Dungeon.Rooms[i][j])
 		}
 	}
-	// for i := range roomSlice {
-	// 	for k := range roomSlice[i].connections {
-	// 		for l := range roomSlice {
-	// 			if roomSlice[i].connections[k] == roomSlice[l] {
-	// 				RoomSlice[i].Connections[k] = RoomSlice[l]
-	// 				break
-	// 			}
-	// 		}
-	// 	}
-	// }
-
-	// for i := range dungeon.sequence {
-	// 	for j := range roomSlice {
-	// 		if dungeon.sequence[i] == roomSlice[j] {
-	// 			SessionToSave.Dungeon.Sequence[i] = RoomSlice[j]
-	// 			break
-	// 		}
-	// 	}
-	// }
 
 	for i := range dungeon.corridors {
 		convertCorridor(&dungeon.corridors[i], &SessionToSave.Dungeon.Corridors[i])
@@ -142,13 +188,11 @@ func convertField(field *map_t, Field *Map_t) {
 	for i := range field.enemies {
 		convertEntity(&field.enemies[i], &Field.Enemies[i])
 	}
-	// Field.Visited = make(map[Position_t]bool)
 
 	for i := range field.visited {
 		var pos Position_t
 		pos.Y, pos.X = i.y, i.x
 		Field.VisitedSlice = append(Field.VisitedSlice, pos)
-		// Field.Visited[pos] = true
 	}
 }
 
@@ -242,10 +286,6 @@ func LoadGame() (*dungeon_t, *map_t, *player_t, error) {
 		os.Exit(1)
 		return nil, nil, nil, err
 	}
-	// else {
-	// 	fmt.Println(err)
-	// 	os.Exit(1)
-	// }
 
 	if savedSession == nil {
 		return nil, nil, nil, nil
@@ -264,36 +304,14 @@ func loadSessionToGame(session *Session) (*dungeon_t, *map_t, *player_t) {
 	dungeon.room_cnt = session.Dungeon.Room_cnt
 	dungeon.corridors_cnt = session.Dungeon.Corridors_cnt
 	var cnt int
-	// roomSlice := make([]*room_t, 0)
-	// RoomSlice := make([]*Room_t, 0)
+
 	for i := 1; i < 4; i++ {
 		for j := 1; j < 4; j++ {
 			recoverRoom(&dungeon.rooms[i][j], &session.Dungeon.Rooms[i][j])
 			dungeon.sequence[cnt] = &dungeon.rooms[i][j]
 			cnt++
-			// roomSlice = append(roomSlice, &dungeon.rooms[i][j])
-			// RoomSlice = append(RoomSlice, &session.Dungeon.Rooms[i][j])
 		}
 	}
-	// for i := range RoomSlice {
-	// 	for k := range RoomSlice[i].Connections {
-	// 		for l := range RoomSlice {
-	// 			if RoomSlice[i].Connections[k] == RoomSlice[l] {
-	// 				roomSlice[i].connections[k] = roomSlice[l]
-	// 				break
-	// 			}
-	// 		}
-	// 	}
-	// }
-
-	// for i := range session.Dungeon.Sequence {
-	// 	for j := range RoomSlice {
-	// 		if session.Dungeon.Sequence[i] == RoomSlice[j] {
-	// 			dungeon.sequence[i] = roomSlice[j]
-	// 			break
-	// 		}
-	// 	}
-	// }
 
 	for i := range session.Dungeon.Corridors {
 		recoverCorridor(&dungeon.corridors[i], &session.Dungeon.Corridors[i])

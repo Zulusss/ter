@@ -2,7 +2,6 @@ package main
 
 func check_connectivity(rooms *dungeon_t) int {
 	rc := CONNECTED
-	// var visited[9] int
 	visited := make([]int, 9)
 	visited_count := depth_first_search(rooms.sequence[0], visited)
 
